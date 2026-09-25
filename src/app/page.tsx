@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-16">
@@ -20,6 +22,17 @@ export default function Home() {
               className="size-2 rounded-full bg-[var(--accent)]"
             />
             Fundação do projeto
+          </div>
+          <div className="mt-8">
+            <Link
+              className="inline-flex items-center rounded-lg bg-[var(--foreground)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+              href="/transacoes"
+            >
+              Ver transações{" "}
+              <span aria-hidden="true" className="ml-2">
+                →
+              </span>
+            </Link>
           </div>
         </div>
       </section>
