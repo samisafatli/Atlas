@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  name         String
+  type         String
+  currency     String        @default("BRL")
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([name, type])
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String
+  type         String
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([name, type])
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  description String
+  amountCents BigInt
+  type        String
+  occurredAt  DateTime
+  accountId   String
+  account     Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([occurredAt])
+  @@index([accountId])
+  @@index([categoryId])
+}
