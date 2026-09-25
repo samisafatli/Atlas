@@ -20,6 +20,7 @@
 /finance.db-journal
 /finance.db-shm
 /finance.db-wal
+/backups/
 
 # Generated Prisma client
 /src/generated/prisma/
