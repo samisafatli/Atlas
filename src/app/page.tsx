@@ -26,9 +26,9 @@ export default function Home() {
           <div className="mt-8">
             <Link
               className="inline-flex items-center rounded-lg bg-[var(--foreground)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
-              href="/transacoes"
+              href="/dashboard"
             >
-              Ver transações{" "}
+              Abrir dashboard{" "}
               <span aria-hidden="true" className="ml-2">
                 →
               </span>
