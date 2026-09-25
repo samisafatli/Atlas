@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { ConfirmDelete } from "./confirm-delete";
+import { CategorySelect } from "./category-select";
+import { updateTransactionCategory } from "./actions";
 
 export const metadata = {
   title: "Transações — Atlas",
@@ -10,6 +13,13 @@ type SearchParams = Promise<{
   month?: string | string[];
   type?: string | string[];
   category?: string | string[];
+  erro?: string;
+  sucesso?: string;
+  quantidade?: string;
+  duplicadas?: string;
+  categoriaStatus?: string;
+  dia?: string;
+  importId?: string;
 }>;
 
 type TransactionsPageProps = {
@@ -78,10 +88,36 @@ export default async function TransactionsPage({
 }: TransactionsPageProps) {
   const params = await searchParams;
   const requestedMonth = firstValue(params.month) ?? "";
+  const requestedDay = firstValue(params.dia) ?? "";
+  const noticeError = Boolean(firstValue(params.erro));
+  const successMessage = firstValue(params.sucesso);
+  const importedCount = Number(firstValue(params.quantidade) ?? 0);
+  const duplicateCount = Number(firstValue(params.duplicadas) ?? 0);
   const monthRange = getMonthRange(requestedMonth);
   const month = monthRange ? requestedMonth : "";
+  const dayMatch = requestedDay.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const requestedDate = new Date(`${requestedDay}T00:00:00.000Z`);
+  const dayRange =
+    dayMatch &&
+    Number.isFinite(requestedDate.getTime()) &&
+    requestedDate.toISOString().slice(0, 10) === requestedDay &&
+    month === requestedDay.slice(0, 7) &&
+    getMonthRange(month)
+      ? {
+          gte: new Date(`${requestedDay}T00:00:00.000Z`),
+          lt: new Date(
+            Date.UTC(
+              Number(dayMatch[1]),
+              Number(dayMatch[2]) - 1,
+              Number(dayMatch[3]) + 1,
+            ),
+          ),
+        }
+      : undefined;
+  const day = dayRange ? requestedDay : "";
   const requestedType = firstValue(params.type);
   const requestedCategory = firstValue(params.category);
+  const requestedImportId = firstValue(params.importId) ?? "";
   const type =
     requestedType === "INCOME" || requestedType === "EXPENSE"
       ? requestedType
@@ -94,18 +130,31 @@ export default async function TransactionsPage({
   )
     ? requestedCategory
     : "";
+  const validImport = requestedImportId
+    ? await prisma.import.findUnique({
+        where: { id: requestedImportId },
+        select: { id: true },
+      })
+    : null;
+  const importId = validImport?.id ?? "";
+  const returnTo = `/transacoes${month || type || categoryId || day || importId ? `?${new URLSearchParams({ ...(month ? { month } : {}), ...(type ? { type } : {}), ...(categoryId ? { category: categoryId } : {}), ...(day ? { dia: day } : {}), ...(importId ? { importId } : {}) })}` : ""}`;
 
   const transactions = await prisma.transaction.findMany({
     where: {
-      ...(monthRange ? { occurredAt: monthRange } : {}),
+      ...(dayRange
+        ? { occurredAt: dayRange }
+        : monthRange
+          ? { occurredAt: monthRange }
+          : {}),
       ...(type ? { type } : {}),
       ...(categoryId ? { categoryId } : {}),
+      ...(importId ? { importId } : {}),
     },
     include: { account: true, category: true },
     orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
   });
 
-  const hasFilters = Boolean(month || type || categoryId);
+  const hasFilters = Boolean(month || type || categoryId || day || importId);
 
   return (
     <main className="min-h-screen px-5 py-8 sm:px-8 sm:py-12">
@@ -136,11 +185,63 @@ export default async function TransactionsPage({
             >
               Transações
             </h1>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                className="inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
+                href="/transacoes/nova"
+              >
+                Nova transação
+              </Link>
+              <Link
+                className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
+                href="/importar"
+              >
+                Importar CSV
+              </Link>
+              <Link
+                className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
+                href="/importar/historico"
+              >
+                Histórico de importações
+              </Link>
+            </div>
           </div>
+
+          {successMessage ? (
+            <p
+              className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+              role="status"
+            >
+              {successMessage === "criada"
+                ? "Transação criada com sucesso."
+                : successMessage === "atualizada"
+                  ? "Transação atualizada com sucesso."
+                  : successMessage === "importadas"
+                    ? `${importedCount} novas transações importadas; ${duplicateCount} repetidas ignoradas.`
+                    : "Transação excluída com sucesso."}
+            </p>
+          ) : null}
+          {noticeError ? (
+            <p
+              className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
+              role="alert"
+            >
+              Não foi possível concluir a operação. Verifique os dados e tente
+              novamente.
+            </p>
+          ) : null}
+          {firstValue(params.categoriaStatus) === "atualizada" ? (
+            <p
+              className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+              role="status"
+            >
+              Categoria atualizada.
+            </p>
+          ) : null}
 
           <form
             action="/transacoes"
-            className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.4fr_auto_auto] lg:items-end"
+            className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto_auto] lg:items-end"
             method="get"
           >
             <label className="grid gap-2 text-sm font-medium" htmlFor="month">
@@ -151,6 +252,17 @@ export default async function TransactionsPage({
                 name="month"
                 type="month"
                 defaultValue={month}
+              />
+            </label>
+
+            <label className="grid gap-2 text-sm font-medium" htmlFor="day">
+              Dia
+              <input
+                className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
+                id="day"
+                name="dia"
+                type="date"
+                defaultValue={day}
               />
             </label>
 
@@ -208,6 +320,9 @@ export default async function TransactionsPage({
               <span className="text-sm text-[var(--muted)]">
                 {transactions.length}{" "}
                 {transactions.length === 1 ? "registro" : "registros"}
+                {day
+                  ? ` em ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}`
+                  : ""}
               </span>
             </div>
 
@@ -261,6 +376,12 @@ export default async function TransactionsPage({
                       >
                         Valor
                       </th>
+                      <th
+                        className="px-6 py-3 text-right font-medium"
+                        scope="col"
+                      >
+                        Ações
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--line)]">
@@ -302,7 +423,27 @@ export default async function TransactionsPage({
                             </span>
                           </td>
                           <td className="px-6 py-4 text-[var(--muted)]">
-                            {transaction.category?.name ?? "Sem categoria"}
+                            <form
+                              action={updateTransactionCategory.bind(
+                                null,
+                                transaction.id,
+                              )}
+                            >
+                              <input
+                                type="hidden"
+                                name="returnTo"
+                                value={returnTo}
+                              />
+                              <CategorySelect
+                                key={transaction.categoryId ?? "uncategorized"}
+                                description={transaction.description}
+                                categoryId={transaction.categoryId}
+                                categories={categories.filter(
+                                  (category) =>
+                                    category.type === transaction.type,
+                                )}
+                              />
+                            </form>
                           </td>
                           <td className="px-6 py-4 text-[var(--muted)]">
                             {transaction.account.name}
@@ -318,6 +459,20 @@ export default async function TransactionsPage({
                               transaction.amountCents,
                               transaction.account.currency,
                             )}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-3">
+                              <Link
+                                className="text-sm text-[var(--accent)] hover:underline"
+                                href={`/transacoes/${transaction.id}/editar`}
+                              >
+                                Editar
+                              </Link>
+                              <ConfirmDelete
+                                id={transaction.id}
+                                description={transaction.description}
+                              />
+                            </div>
                           </td>
                         </tr>
                       );
