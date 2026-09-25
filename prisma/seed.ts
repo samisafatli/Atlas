@@ -8,11 +8,22 @@ const accountSeed = {
 };
 
 const categorySeeds = [
-  { name: "Moradia", type: "EXPENSE" },
-  { name: "Alimentação", type: "EXPENSE" },
-  { name: "Transporte", type: "EXPENSE" },
-  { name: "Saúde", type: "EXPENSE" },
-  { name: "Lazer", type: "EXPENSE" },
+  ...[
+    "Alimentação",
+    "Mercado",
+    "Transporte",
+    "Moradia",
+    "Saúde",
+    "Lazer",
+    "Compras",
+    "Assinaturas",
+    "Viagem",
+    "Educação",
+    "Investimentos",
+    "Transferências",
+    "Outros",
+  ].map((name) => ({ name, type: "EXPENSE" })),
+  { name: "Receita", type: "INCOME" },
   { name: "Salário", type: "INCOME" },
 ];
 

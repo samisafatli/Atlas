@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
   importFileExtension = "ts"
 }
 
@@ -21,14 +21,63 @@ model Account {
 }
 
 model Category {
-  id           String        @id @default(cuid())
+  id           String         @id @default(cuid())
   name         String
   type         String
   transactions Transaction[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  rules        CategoryRule[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   @@unique([name, type])
+}
+
+model CategoryRule {
+  id         String   @id @default(cuid())
+  contains   String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([contains, categoryId])
+  @@index([enabled])
+}
+
+model AssetAccount {
+  id          String               @id @default(cuid())
+  name        String
+  institution String
+  type        String
+  currency    String               @default("BRL")
+  snapshots   AssetSnapshotValue[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@unique([name, institution])
+}
+
+model AssetSnapshot {
+  id           String               @id @default(cuid())
+  snapshotDate DateTime             @unique
+  totalCents   BigInt
+  values       AssetSnapshotValue[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([snapshotDate])
+}
+
+model AssetSnapshotValue {
+  snapshotId  String
+  accountId   String
+  amountCents BigInt
+  snapshot    AssetSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  account     AssetAccount  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@id([snapshotId, accountId])
+  @@index([accountId])
 }
 
 model Transaction {
@@ -41,10 +90,22 @@ model Transaction {
   account     Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  importId    String?
+  importedIn  Import?   @relation(fields: [importId], references: [id], onDelete: SetNull)
+  fingerprint String?   @unique
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([occurredAt])
   @@index([accountId])
   @@index([categoryId])
+  @@index([importId])
+}
+
+model Import {
+  id               String        @id @default(cuid())
+  filename         String
+  importedAt       DateTime      @default(now())
+  transactionCount Int
+  transactions     Transaction[]
 }
