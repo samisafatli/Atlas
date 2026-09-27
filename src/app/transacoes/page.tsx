@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PeriodFilter } from "./period-filter";
 import { prisma } from "@/lib/prisma";
 import { ConfirmDelete } from "./confirm-delete";
 import { CategorySelect } from "./category-select";
@@ -15,6 +16,7 @@ export const metadata = {
 };
 
 type SearchParams = Promise<{
+  year?: string | string[];
   month?: string | string[];
   type?: string | string[];
   category?: string | string[];
@@ -98,36 +100,46 @@ export default async function TransactionsPage({
   const successMessage = firstValue(params.sucesso);
   const importedCount = Number(firstValue(params.quantidade) ?? 0);
   const duplicateCount = Number(firstValue(params.duplicadas) ?? 0);
-  const monthRange = getMonthRange(requestedMonth);
-  const month = monthRange ? requestedMonth : "";
+  const requestedYear = firstValue(params.year);
+  const validYear =
+    requestedYear && /^(19\d{2}|[2-9]\d{3})$/.test(requestedYear)
+      ? requestedYear
+      : "";
+  const legacyMonthRange = getMonthRange(requestedMonth);
+  const year =
+    requestedYear === undefined
+      ? legacyMonthRange
+        ? requestedMonth.slice(0, 4)
+        : ""
+      : validYear;
+  const month =
+    year && legacyMonthRange && requestedMonth.startsWith(`${year}-`)
+      ? requestedMonth
+      : "";
+  const monthRange = getMonthRange(month);
+  const yearRange = year
+    ? {
+        gte: new Date(`${year}-01-01T00:00:00Z`),
+        lt: new Date(Date.UTC(Number(year) + 1, 0, 1)),
+      }
+    : undefined;
   const transactionDates = await prisma.transaction.findMany({
     select: { occurredAt: true },
     distinct: ["occurredAt"],
   });
-  const currentYear = new Date().getUTCFullYear();
-  const availableMonths = new Set(
-    transactionDates.map(({ occurredAt }) =>
-      occurredAt.toISOString().slice(0, 7),
+  const years = [
+    ...new Set(
+      transactionDates.map(({ occurredAt }) => occurredAt.getUTCFullYear()),
     ),
-  );
-  for (let index = 1; index <= 12; index += 1) {
-    availableMonths.add(`${currentYear}-${String(index).padStart(2, "0")}`);
-  }
-  if (month) availableMonths.add(month);
-  const monthOptions = [...availableMonths].sort().reverse();
-  const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+  ].sort((a, b) => b - a);
   const dayMatch = requestedDay.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const requestedDate = new Date(`${requestedDay}T00:00:00.000Z`);
   const dayRange =
     dayMatch &&
     Number.isFinite(requestedDate.getTime()) &&
     requestedDate.toISOString().slice(0, 10) === requestedDay &&
-    month === requestedDay.slice(0, 7) &&
-    getMonthRange(month)
+    (!year || year === requestedDay.slice(0, 4)) &&
+    (!month || month === requestedDay.slice(0, 7))
       ? {
           gte: new Date(`${requestedDay}T00:00:00.000Z`),
           lt: new Date(
@@ -163,14 +175,14 @@ export default async function TransactionsPage({
       })
     : null;
   const importId = validImport?.id ?? "";
-  const returnTo = `/transacoes${month || type || categoryId || day || importId ? `?${new URLSearchParams({ ...(month ? { month } : {}), ...(type ? { type } : {}), ...(categoryId ? { category: categoryId } : {}), ...(day ? { dia: day } : {}), ...(importId ? { importId } : {}) })}` : ""}`;
+  const returnTo = `/transacoes${year || month || type || categoryId || day || importId ? `?${new URLSearchParams({ ...(year ? { year } : {}), ...(month ? { month } : {}), ...(type ? { type } : {}), ...(categoryId ? { category: categoryId } : {}), ...(day ? { dia: day } : {}), ...(importId ? { importId } : {}) })}` : ""}`;
 
   const transactions = await prisma.transaction.findMany({
     where: {
       ...(dayRange
         ? { occurredAt: dayRange }
-        : monthRange
-          ? { occurredAt: monthRange }
+        : (monthRange ?? yearRange)
+          ? { occurredAt: monthRange ?? yearRange }
           : {}),
       ...(type ? { type } : {}),
       ...(categoryId ? { categoryId } : {}),
@@ -180,7 +192,9 @@ export default async function TransactionsPage({
     orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
   });
 
-  const hasFilters = Boolean(month || type || categoryId || day || importId);
+  const hasFilters = Boolean(
+    year || month || type || categoryId || day || importId,
+  );
 
   return (
     <main className="min-h-screen px-5 py-8 sm:px-8 sm:py-12">
@@ -273,36 +287,16 @@ export default async function TransactionsPage({
 
           <form
             action="/transacoes"
-            className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto_auto] lg:items-end"
+            className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1fr_1fr_1.2fr_auto_auto] lg:items-end"
             method="get"
           >
-            <label className="grid gap-2 text-sm font-medium" htmlFor="month">
-              Mês
-              <select
-                className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
-                id="month"
-                name="month"
-                defaultValue={month}
-              >
-                <option value="">Todos os meses</option>
-                {monthOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {monthFormatter.format(new Date(`${value}-01T00:00:00Z`))}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="grid gap-2 text-sm font-medium" htmlFor="day">
-              Dia
-              <input
-                className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
-                id="day"
-                name="dia"
-                type="date"
-                defaultValue={day}
-              />
-            </label>
+            <PeriodFilter
+              key={`${year}-${month}-${day}`}
+              year={year}
+              month={month}
+              day={day}
+              years={years}
+            />
 
             <label className="grid gap-2 text-sm font-medium" htmlFor="type">
               Tipo
