@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { categoryType } from "@/lib/transaction-types";
 
 function readTransaction(formData: FormData, categoryRequired = false) {
   const description = String(formData.get("description") ?? "").trim();
@@ -25,8 +26,8 @@ function readTransaction(formData: FormData, categoryRequired = false) {
     amountCents <= 0n ||
     !Number.isFinite(occurredAt.getTime()) ||
     occurredAt.toISOString().slice(0, 10) !== date ||
-    !["INCOME", "EXPENSE"].includes(type) ||
-    (categoryRequired && !categoryId) ||
+    !["INCOME", "EXPENSE", "REFUND", "TRANSFER"].includes(type) ||
+    (categoryRequired && type !== "TRANSFER" && !categoryId) ||
     !accountId
   )
     return null;
@@ -35,7 +36,7 @@ function readTransaction(formData: FormData, categoryRequired = false) {
     occurredAt,
     amountCents,
     type,
-    categoryId: categoryId || null,
+    categoryId: type === "TRANSFER" ? null : categoryId || null,
     accountId,
   };
 }
@@ -50,7 +51,9 @@ async function validReferences(
       : null,
   ]);
   return Boolean(
-    account && (!data.categoryId || (category && category.type === data.type)),
+    account &&
+    (!data.categoryId ||
+      (category && category.type === categoryType(data.type))),
   );
 }
 
@@ -108,7 +111,8 @@ export async function updateTransactionCategory(
   ]);
   if (
     !transaction ||
-    (categoryId && (!category || category.type !== transaction.type))
+    (categoryId &&
+      (!category || category.type !== categoryType(transaction.type)))
   )
     redirect(
       `${safeReturnTo}${safeReturnTo.includes("?") ? "&" : "?"}erro=categoria`,

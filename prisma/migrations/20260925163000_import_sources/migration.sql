@@ -1,0 +1,5 @@
+ALTER TABLE "Transaction" ADD COLUMN "sourceType" TEXT NOT NULL DEFAULT 'MANUAL';
+ALTER TABLE "Transaction" ADD COLUMN "externalId" TEXT;
+UPDATE "Transaction" SET "sourceType" = 'LEGACY' WHERE "importId" IS NOT NULL;
+ALTER TABLE "Import" ADD COLUMN "sourceType" TEXT NOT NULL DEFAULT 'LEGACY';
+ALTER TABLE "Import" ADD COLUMN "parserVersion" INTEGER NOT NULL DEFAULT 1;

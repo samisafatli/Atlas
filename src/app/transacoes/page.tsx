@@ -2,6 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ConfirmDelete } from "./confirm-delete";
 import { CategorySelect } from "./category-select";
+import {
+  categoryType,
+  typeLabels,
+  transactionSign,
+} from "@/lib/transaction-types";
 import { updateTransactionCategory } from "./actions";
 
 export const metadata = {
@@ -95,6 +100,26 @@ export default async function TransactionsPage({
   const duplicateCount = Number(firstValue(params.duplicadas) ?? 0);
   const monthRange = getMonthRange(requestedMonth);
   const month = monthRange ? requestedMonth : "";
+  const transactionDates = await prisma.transaction.findMany({
+    select: { occurredAt: true },
+    distinct: ["occurredAt"],
+  });
+  const currentYear = new Date().getUTCFullYear();
+  const availableMonths = new Set(
+    transactionDates.map(({ occurredAt }) =>
+      occurredAt.toISOString().slice(0, 7),
+    ),
+  );
+  for (let index = 1; index <= 12; index += 1) {
+    availableMonths.add(`${currentYear}-${String(index).padStart(2, "0")}`);
+  }
+  if (month) availableMonths.add(month);
+  const monthOptions = [...availableMonths].sort().reverse();
+  const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
   const dayMatch = requestedDay.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const requestedDate = new Date(`${requestedDay}T00:00:00.000Z`);
   const dayRange =
@@ -119,7 +144,8 @@ export default async function TransactionsPage({
   const requestedCategory = firstValue(params.category);
   const requestedImportId = firstValue(params.importId) ?? "";
   const type =
-    requestedType === "INCOME" || requestedType === "EXPENSE"
+    requestedType &&
+    ["INCOME", "EXPENSE", "REFUND", "TRANSFER"].includes(requestedType)
       ? requestedType
       : "";
   const categories = await prisma.category.findMany({
@@ -185,6 +211,12 @@ export default async function TransactionsPage({
             >
               Transações
             </h1>
+            <p className="mt-3 text-sm text-[var(--muted)]">
+              Pagamentos de fatura e transferências não entram no resultado.
+              Para ajustar um Pix entre contas próprias ou um reembolso, use
+              Editar → Tipo; mudar apenas a categoria não altera a natureza do
+              lançamento.
+            </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 className="inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
@@ -246,13 +278,19 @@ export default async function TransactionsPage({
           >
             <label className="grid gap-2 text-sm font-medium" htmlFor="month">
               Mês
-              <input
+              <select
                 className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
                 id="month"
                 name="month"
-                type="month"
                 defaultValue={month}
-              />
+              >
+                <option value="">Todos os meses</option>
+                {monthOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {monthFormatter.format(new Date(`${value}-01T00:00:00Z`))}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="grid gap-2 text-sm font-medium" htmlFor="day">
@@ -277,6 +315,8 @@ export default async function TransactionsPage({
                 <option value="">Todos</option>
                 <option value="INCOME">Receitas</option>
                 <option value="EXPENSE">Despesas</option>
+                <option value="REFUND">Créditos / estornos</option>
+                <option value="TRANSFER">Transferências / pagamentos</option>
               </select>
             </label>
 
@@ -393,12 +433,9 @@ export default async function TransactionsPage({
                         : isExpense
                           ? "text-rose-700"
                           : "text-[var(--foreground)]";
-                      const typeLabel = isIncome
-                        ? "Receita"
-                        : isExpense
-                          ? "Despesa"
-                          : transaction.type;
-                      const amountSign = isIncome ? "+" : isExpense ? "−" : "";
+                      const typeLabel =
+                        typeLabels[transaction.type] ?? transaction.type;
+                      const amountSign = transactionSign(transaction.type);
 
                       return (
                         <tr key={transaction.id}>
@@ -440,7 +477,8 @@ export default async function TransactionsPage({
                                 categoryId={transaction.categoryId}
                                 categories={categories.filter(
                                   (category) =>
-                                    category.type === transaction.type,
+                                    category.type ===
+                                    categoryType(transaction.type),
                                 )}
                               />
                             </form>

@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { parseNubankCsv, type ImportedTransaction } from "@/lib/nubank-csv";
+import {
+  parseNubankCsv,
+  sourceLabels,
+  type ImportedTransaction,
+} from "@/lib/nubank-csv";
+import { typeLabels, transactionSign } from "@/lib/transaction-types";
+import { ImportSummary } from "./summary";
 
 function formatAmount(cents: string) {
   return new Intl.NumberFormat("pt-BR", {
@@ -106,12 +112,19 @@ export function ImportPreview() {
               Escolher outro arquivo
             </button>
           </div>
+          <div className="p-5">
+            <p className="font-medium">
+              Detectado: {sourceLabels[transactions[0].sourceType]}
+            </p>
+            <ImportSummary transactions={transactions} />
+          </div>
           <div className="max-h-[28rem] overflow-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead className="sticky top-0 bg-[#f7f8f5] text-xs uppercase text-[var(--muted)]">
                 <tr>
                   <th className="px-5 py-3">Data</th>
                   <th className="px-5 py-3">Descrição</th>
+                  <th className="px-5 py-3">Natureza</th>
                   <th className="px-5 py-3 text-right">Valor</th>
                 </tr>
               </thead>
@@ -124,8 +137,11 @@ export function ImportPreview() {
                       }).format(new Date(`${transaction.date}T12:00:00Z`))}
                     </td>
                     <td className="px-5 py-3">{transaction.description}</td>
+                    <td className="px-5 py-3">
+                      {typeLabels[transaction.type]}
+                    </td>
                     <td className="whitespace-nowrap px-5 py-3 text-right">
-                      {transaction.type === "EXPENSE" ? "− " : "+ "}
+                      {transactionSign(transaction.type)}
                       {formatAmount(transaction.amountCents)}
                     </td>
                   </tr>

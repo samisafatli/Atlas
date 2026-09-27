@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { SaveImportForm } from "../save-form";
 
 export const metadata = { title: "Salvar importação — Atlas" };
+export const dynamic = "force-dynamic";
 
 export default async function SaveImportPage() {
   const accounts = await prisma.account.findMany({ orderBy: { name: "asc" } });

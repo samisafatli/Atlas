@@ -54,6 +54,9 @@ const { saveNubankImport } = await import("../src/app/importar/actions.ts");
 const { countImportDuplicates } =
   await import("../src/app/importar/duplicate-count.ts");
 const { parseNubankCsv } = await import("../src/lib/nubank-csv.ts");
+const { repairImport } = await import("../src/lib/repair-import.ts");
+const { resultAmount, expenseAmount } =
+  await import("../src/lib/transaction-types.ts");
 const { legacyTransactionFingerprint } =
   await import("../src/lib/transaction-fingerprint.ts");
 const assets = await import("../src/app/patrimonio/actions.ts");
@@ -284,6 +287,199 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
   );
 
   await t.test(
+    "card and bank formats keep debits visible without counting bill payments twice",
+    async () => {
+      const isolated = await prisma.account.create({
+        data: { name: "Cartão e conta teste", type: "CHECKING" },
+      });
+      const cardCsv =
+        'date,title,amount\n2026-09-01,Compra teste,"100,00"\n2026-09-02,Ajuste a crédito,"- 10,00"\n2026-09-03,Pagamento recebido,"- 90,00"\n';
+      const card = parseNubankCsv(cardCsv);
+      assert.deepEqual(
+        card.map((row) => row.type),
+        ["EXPENSE", "REFUND", "TRANSFER"],
+      );
+      const bank = parseNubankCsv(
+        'Data,Valor,Identificador,Descrição\n01/09/2026,"1000,00",bank-1,Salário\n02/09/2026,"-20,00",bank-2,Compra no débito\n03/09/2026,"-90,00",bank-3,Pagamento de fatura\n',
+      );
+      assert.equal(bank[1].description, "Compra no débito");
+      assert.equal(bank[1].externalId, "bank-2");
+      assert.deepEqual(
+        bank.map((row) => row.type),
+        ["INCOME", "EXPENSE", "TRANSFER"],
+      );
+      for (const [name, rows] of [
+        ["card.csv", card],
+        ["bank.csv", bank],
+      ]) {
+        await redirected(
+          () =>
+            saveNubankImport(
+              form({
+                filename: name,
+                accountId: isolated.id,
+                transactions: JSON.stringify(rows),
+              }),
+            ),
+          "quantidade=3&duplicadas=0",
+        );
+        await redirected(
+          () =>
+            saveNubankImport(
+              form({
+                filename: name,
+                accountId: isolated.id,
+                transactions: JSON.stringify(rows),
+              }),
+            ),
+          "quantidade=0&duplicadas=3",
+        );
+      }
+      const saved = await prisma.transaction.findMany({
+        where: { accountId: isolated.id },
+      });
+      assert.equal(
+        saved.reduce(
+          (sum, row) => sum + resultAmount(row.type, row.amountCents),
+          0n,
+        ),
+        89000n,
+      );
+      assert.equal(
+        saved.reduce(
+          (sum, row) => sum + expenseAmount(row.type, row.amountCents),
+          0n,
+        ),
+        11000n,
+      );
+      // Equal descriptions/dates/amounts across sources are independent purchases.
+      const coincident = parseNubankCsv(
+        'Data,Valor,Identificador,Descrição\n01/09/2026,"-100,00",bank-4,Compra teste\n01/09/2026,"-100,00",bank-5,Compra teste\n',
+      );
+      assert.equal(
+        (await countImportDuplicates(coincident, isolated.id)).newCount,
+        2,
+      );
+      assert.throws(
+        () =>
+          parseNubankCsv(
+            "date,title,amount\n2026-09-01,Valid,10\n2026-02-30,Broken,10",
+          ),
+        /Linha 3/,
+      );
+      assert.throws(
+        () => parseNubankCsv('date,title,amount\n2026-09-01,"Unclosed,10'),
+        /aspas/,
+      );
+      assert.throws(
+        () =>
+          parseNubankCsv("date,description,amount\n2026-09-01,Ambiguous,10"),
+        /Formato desconhecido/,
+      );
+    },
+  );
+
+  await t.test(
+    "legacy repair is atomic, preserves IDs and rejects edited rows",
+    async () => {
+      const isolated = await prisma.account.create({
+        data: { name: "Reparo teste", type: "CHECKING" },
+      });
+      const csv =
+        "date,title,amount\n2026-09-01,Compra reparo,100\n2026-09-02,Ajuste a crédito,-10\n2026-09-03,Pagamento recebido,-90";
+      const rows = parseNubankCsv(csv);
+      const old = await prisma.import.create({
+        data: { filename: "legacy.csv", transactionCount: rows.length },
+      });
+      for (const row of rows)
+        await prisma.transaction.create({
+          data: {
+            description: row.description,
+            amountCents: BigInt(row.amountCents),
+            occurredAt: new Date(`${row.date}T12:00:00Z`),
+            type: row.type === "EXPENSE" ? "INCOME" : "EXPENSE",
+            accountId: isolated.id,
+            importId: old.id,
+            sourceType: "LEGACY",
+            fingerprint: legacyTransactionFingerprint({
+              ...row,
+              accountId: isolated.id,
+            }),
+          },
+        });
+      const before = await prisma.transaction.findMany({
+        where: { importId: old.id },
+        orderBy: { id: "asc" },
+      });
+      await assert.rejects(
+        () =>
+          repairImport(
+            prisma,
+            old.id,
+            csv.replace("Compra reparo", "Compra modificada"),
+          ),
+        /alterado ou ambíguo/,
+      );
+      assert.deepEqual(
+        await prisma.transaction.findMany({
+          where: { importId: old.id },
+          orderBy: { id: "asc" },
+        }),
+        before,
+      );
+      assert.equal((await repairImport(prisma, old.id, csv)).repaired, 3);
+      assert.deepEqual(
+        (
+          await prisma.transaction.findMany({
+            where: { importId: old.id },
+            orderBy: { id: "asc" },
+          })
+        ).map((row) => row.id),
+        before.map((row) => row.id),
+      );
+      assert.equal(
+        (await repairImport(prisma, old.id, csv)).alreadyCurrent,
+        true,
+      );
+      assert.equal(
+        (await countImportDuplicates(rows, isolated.id)).existing,
+        3,
+      );
+      assert.equal(
+        (await prisma.import.findUniqueOrThrow({ where: { id: old.id } }))
+          .sourceType,
+        "CREDIT_CARD",
+      );
+      // Manual reclassification must not make an imported bank row reappear.
+      const bank = await prisma.transaction.findFirstOrThrow({
+        where: { externalId: "bank-2" },
+      });
+      await redirected(
+        () =>
+          transactions.updateTransaction(
+            bank.id,
+            form({
+              description: bank.description,
+              date: "2026-09-02",
+              amount: "20.00",
+              type: "TRANSFER",
+              accountId: bank.accountId,
+              categoryId: "",
+            }),
+          ),
+        "sucesso=atualizada",
+      );
+      const source = parseNubankCsv(
+        'Data,Valor,Identificador,Descrição\n02/09/2026,"-20,00",bank-2,Compra no débito',
+      );
+      assert.equal(
+        (await countImportDuplicates(source, bank.accountId)).existing,
+        1,
+      );
+    },
+  );
+
+  await t.test(
     "asset CRUD and snapshots preserve history until explicit edits",
     async () => {
       await redirected(
@@ -393,6 +589,26 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       const original = JSON.parse(contents);
       assert.ok(original.data.imports.length > 0);
       assert.ok(backup.parseBackup(contents));
+      const legacyDocument = structuredClone(original);
+      legacyDocument.version = 1;
+      for (const row of legacyDocument.data.imports) {
+        delete row.sourceType;
+        delete row.parserVersion;
+      }
+      for (const row of legacyDocument.data.transactions) {
+        delete row.sourceType;
+        delete row.externalId;
+      }
+      const parsedLegacy = backup.parseBackup(JSON.stringify(legacyDocument));
+      assert.ok(parsedLegacy);
+      assert.ok(
+        parsedLegacy.data.imports.every(
+          (row) => row.sourceType === "LEGACY" && row.parserVersion === 1,
+        ),
+      );
+      assert.ok(
+        parsedLegacy.data.transactions.every((row) => row.externalId === null),
+      );
       assert.equal(
         backup.parseBackup(JSON.stringify({ ...original, version: 999 })),
         null,

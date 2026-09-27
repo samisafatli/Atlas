@@ -6,13 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { transactionFingerprint } from "@/lib/transaction-fingerprint";
 import { existingImportFingerprints } from "@/lib/import-deduplication";
 import { matchCategoryRule, sortCategoryRules } from "@/lib/category-rules";
+import type { ImportedTransaction } from "@/lib/nubank-csv";
+import { categoryType, transactionTypes } from "@/lib/transaction-types";
 
-type PreviewRow = {
-  date: string;
-  description: string;
-  amountCents: string;
-  type: "INCOME" | "EXPENSE";
-};
+type PreviewRow = ImportedTransaction;
 
 export async function saveNubankImport(formData: FormData) {
   const filename = String(formData.get("filename") ?? "").trim();
@@ -34,19 +31,31 @@ export async function saveNubankImport(formData: FormData) {
     filename.length > 300 ||
     !account ||
     rows.some((row) => {
+      if (!row || typeof row !== "object") return true;
       const date = new Date(`${row.date}T12:00:00Z`);
       return (
         !/^\d{4}-\d{2}-\d{2}$/.test(row.date) ||
         !Number.isFinite(date.getTime()) ||
         date.toISOString().slice(0, 10) !== row.date ||
-        !row.description?.trim() ||
+        typeof row.description !== "string" ||
+        !row.description.trim() ||
         row.description.length > 300 ||
         !/^[1-9]\d{0,13}$/.test(row.amountCents) ||
-        !["INCOME", "EXPENSE"].includes(row.type)
+        !transactionTypes.includes(row.type) ||
+        !["BANK_STATEMENT", "CREDIT_CARD"].includes(row.sourceType) ||
+        row.sourceType !== rows[0].sourceType ||
+        (row.externalId !== null &&
+          (typeof row.externalId !== "string" ||
+            row.externalId.length > 200)) ||
+        (row.sourceType === "CREDIT_CARD" && row.type === "INCOME")
       );
     })
   )
     redirect("/importar?erro=arquivo");
+  const legacyImport = await prisma.import.findFirst({
+    where: { sourceType: "LEGACY", transactions: { some: { accountId } } },
+  });
+  if (legacyImport) redirect("/importar?erro=legado");
 
   let inserted = 0;
   let skipped = 0;
@@ -75,7 +84,7 @@ export async function saveNubankImport(formData: FormData) {
         seen.add(fingerprint);
         const matchedCategory = matchCategoryRule(
           row.description,
-          row.type,
+          categoryType(row.type) ?? "TRANSFER",
           rules,
         );
         return [
@@ -86,12 +95,19 @@ export async function saveNubankImport(formData: FormData) {
             occurredAt: new Date(`${row.date}T12:00:00.000Z`),
             accountId,
             fingerprint,
+            sourceType: row.sourceType,
+            externalId: row.externalId,
             categoryId: matchedCategory?.category.id ?? null,
           },
         ];
       });
       const record = await tx.import.create({
-        data: { filename, transactionCount: toCreate.length },
+        data: {
+          filename,
+          transactionCount: toCreate.length,
+          sourceType: rows[0].sourceType,
+          parserVersion: 2,
+        },
       });
       for (let index = 0; index < toCreate.length; index += 100) {
         const batch = toCreate.slice(index, index + 100);
@@ -105,6 +121,9 @@ export async function saveNubankImport(formData: FormData) {
     redirect("/importar?erro=salvar");
   }
   revalidatePath("/transacoes");
+  revalidatePath("/dashboard");
+  revalidatePath("/recorrentes");
+  revalidatePath("/importar/historico");
   revalidatePath("/");
   redirect(
     `/transacoes?sucesso=importadas&quantidade=${inserted}&duplicadas=${skipped}`,

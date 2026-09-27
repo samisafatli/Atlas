@@ -2,9 +2,10 @@ import "server-only";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { prisma } from "@/lib/prisma";
+import { categoryType } from "./transaction-types";
 
 export const BACKUP_FORMAT = "atlas-backup";
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 
 type Reader = Pick<
   typeof prisma,
@@ -100,6 +101,8 @@ type BackupData = {
     filename: string;
     importedAt: string;
     transactionCount: number;
+    sourceType: string;
+    parserVersion: number;
   }[];
   categoryRules: (Timed & {
     contains: string;
@@ -115,6 +118,8 @@ type BackupData = {
     categoryId: string | null;
     importId: string | null;
     fingerprint: string | null;
+    sourceType: string;
+    externalId: string | null;
   })[];
   assetAccounts: (Timed & {
     name: string;
@@ -161,7 +166,7 @@ export function parseBackup(contents: string): BackupDocument | null {
   if (
     !isObject(parsed) ||
     parsed.format !== BACKUP_FORMAT ||
-    parsed.version !== BACKUP_VERSION ||
+    (parsed.version !== 1 && parsed.version !== BACKUP_VERSION) ||
     !isDate(parsed.exportedAt) ||
     !isObject(parsed.data)
   )
@@ -186,6 +191,35 @@ export function parseBackup(contents: string): BackupDocument | null {
   )
     return null;
   const data = rawData as unknown as BackupData;
+  if (parsed.version === 1) {
+    for (const row of data.imports) {
+      row.sourceType ??= "LEGACY";
+      row.parserVersion ??= 1;
+    }
+    for (const row of data.transactions) {
+      row.sourceType ??= row.importId ? "LEGACY" : "MANUAL";
+      row.externalId ??= null;
+    }
+  }
+  if (
+    data.imports.some(
+      (row) =>
+        !["LEGACY", "BANK_STATEMENT", "CREDIT_CARD"].includes(row.sourceType) ||
+        ![1, 2].includes(row.parserVersion),
+    )
+  )
+    return null;
+  if (
+    data.transactions.some(
+      (row) =>
+        !["MANUAL", "LEGACY", "BANK_STATEMENT", "CREDIT_CARD"].includes(
+          row.sourceType,
+        ) ||
+        (row.externalId !== null &&
+          (typeof row.externalId !== "string" || row.externalId.length > 200)),
+    )
+  )
+    return null;
   const ids = new Map<string, Set<string>>();
   for (const key of keys.filter((name) => name !== "assetSnapshotValues")) {
     const rows = data[key];
@@ -277,7 +311,9 @@ export function parseBackup(contents: string): BackupDocument | null {
         !row.description.trim() ||
         !isIntString(row.amountCents) ||
         BigInt(row.amountCents) <= 0n ||
-        !["INCOME", "EXPENSE"].includes(String(row.type)) ||
+        !["INCOME", "EXPENSE", "REFUND", "TRANSFER"].includes(
+          String(row.type),
+        ) ||
         !isDate(row.occurredAt) ||
         !accountIds.has(String(row.accountId)) ||
         (row.categoryId !== null &&
@@ -305,7 +341,7 @@ export function parseBackup(contents: string): BackupDocument | null {
       const category = data.categories.find(
         (candidate) => candidate.id === row.categoryId,
       );
-      if (!category || category.type !== row.type) return null;
+      if (!category || category.type !== categoryType(row.type)) return null;
     }
   }
   if (
@@ -408,6 +444,8 @@ export async function restoreBackup(document: BackupDocument) {
           filename: row.filename,
           importedAt: new Date(String(row.importedAt)),
           transactionCount: row.transactionCount as number,
+          sourceType: row.sourceType,
+          parserVersion: row.parserVersion,
         })),
         (batch) => tx.import.createMany({ data: batch }),
       );
@@ -433,6 +471,8 @@ export async function restoreBackup(document: BackupDocument) {
           categoryId: row.categoryId as string | null,
           importId: row.importId as string | null,
           fingerprint: row.fingerprint as string | null,
+          sourceType: row.sourceType,
+          externalId: row.externalId,
           createdAt: new Date(String(row.createdAt)),
           updatedAt: new Date(String(row.updatedAt)),
         })),

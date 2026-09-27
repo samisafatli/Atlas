@@ -6,6 +6,8 @@ import { SpendingCalendar } from "./spending-calendar";
 import { CategoryBreakdown } from "./category-breakdown";
 import { RecentTransactions } from "./recent-transactions";
 import { MonthlyClose } from "./monthly-close";
+import { resultAmount, expenseAmount } from "@/lib/transaction-types";
+import { formatCents } from "@/lib/finance-format";
 
 export const metadata = {
   title: "Dashboard — Atlas",
@@ -74,16 +76,22 @@ export default async function DashboardPage({
     ]);
   const cumulativeBalance = cumulativeTotals.reduce(
     (sum, group) =>
-      sum +
-      (group.type === "INCOME"
-        ? (group._sum.amountCents ?? 0n)
-        : group.type === "EXPENSE"
-          ? -(group._sum.amountCents ?? 0n)
-          : 0n),
+      sum + resultAmount(group.type, group._sum.amountCents ?? 0n),
     0n,
   );
   const incomes = transactions.filter((item) => item.type === "INCOME");
-  const expenses = transactions.filter((item) => item.type === "EXPENSE");
+  const expenses = transactions
+    .filter((item) => ["EXPENSE", "REFUND"].includes(item.type))
+    .map((item) => ({
+      ...item,
+      amountCents: expenseAmount(item.type, item.amountCents),
+    }));
+  const grossExpenses = transactions
+    .filter((item) => item.type === "EXPENSE")
+    .reduce((sum, item) => sum + item.amountCents, 0n);
+  const refunds = transactions
+    .filter((item) => item.type === "REFUND")
+    .reduce((sum, item) => sum + item.amountCents, 0n);
   const incomeTotal = incomes.reduce((sum, item) => sum + item.amountCents, 0n);
   const expenseTotal = expenses.reduce(
     (sum, item) => sum + item.amountCents,
@@ -164,6 +172,20 @@ export default async function DashboardPage({
           expenses={expenseTotal}
           cumulativeBalance={cumulativeBalance}
         />
+        <p className="mt-4 text-sm text-[var(--muted)]">
+          Cobranças/despesas: {formatCents(grossExpenses)} · Créditos/estornos:{" "}
+          {formatCents(refunds)}. Pagamentos de fatura e transferências ficam
+          fora do resultado.
+        </p>
+        {transactions.some((item) => item.sourceType === "CREDIT_CARD") ? (
+          <p className="mt-3 rounded-xl bg-amber-50 p-4 text-sm">
+            Este período contém fatura de cartão. Compras e parcelas usam a data
+            do CSV; a fatura não informa suas receitas, Pix nem compras no
+            débito. Importe também o extrato da conta e revise transferências
+            entre contas próprias. Resultado não é saldo bancário nem valor da
+            fatura a pagar.
+          </p>
+        ) : null}
         {!transactions.length ? (
           <p className="mt-4 rounded-xl border border-[var(--line)] bg-white/60 p-4 text-sm text-[var(--muted)]">
             Nenhuma transação registrada neste mês. Importe um CSV ou cadastre

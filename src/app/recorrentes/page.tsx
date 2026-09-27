@@ -4,6 +4,7 @@ import { formatCents } from "@/lib/finance-format";
 import { detectRecurringExpenses } from "./recurrence";
 
 export const metadata = { title: "Gastos recorrentes — Atlas" };
+export const dynamic = "force-dynamic";
 
 export default async function RecurringPage() {
   const now = new Date();

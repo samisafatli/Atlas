@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatCents } from "@/lib/finance-format";
+import { expenseAmount } from "@/lib/transaction-types";
 
 type Transaction = { occurredAt: Date; amountCents: bigint; type: string };
 const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -19,9 +20,13 @@ export function SpendingCalendar({
     (new Date(Date.UTC(year, monthNumber - 1, 1)).getUTCDay() + 6) % 7;
   const daily = new Map<number, bigint>();
   for (const transaction of transactions)
-    if (transaction.type === "EXPENSE") {
+    if (["EXPENSE", "REFUND"].includes(transaction.type)) {
       const day = transaction.occurredAt.getUTCDate();
-      daily.set(day, (daily.get(day) ?? 0n) + transaction.amountCents);
+      daily.set(
+        day,
+        (daily.get(day) ?? 0n) +
+          expenseAmount(transaction.type, transaction.amountCents),
+      );
     }
   const max = [...daily.values()].reduce(
     (highest, value) => (value > highest ? value : highest),
@@ -41,8 +46,8 @@ export function SpendingCalendar({
           Gastos por dia
         </h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Intensidade pelo valor das despesas. Os números mostram o dia e o
-          total.
+          Despesas líquidas por dia. Créditos abatem gastos; valores negativos
+          indicam mais créditos do que cobranças.
         </p>
       </div>
       <div className="grid grid-cols-7 gap-1.5">
@@ -65,7 +70,7 @@ export function SpendingCalendar({
             );
           const amount = daily.get(day) ?? 0n;
           const intensity =
-            amount === 0n || max === 0n
+            amount <= 0n || max === 0n
               ? 0
               : amount * 4n >= max * 3n
                 ? 4
@@ -100,7 +105,8 @@ export function SpendingCalendar({
         })}
       </div>
       <p className="mt-4 text-xs text-[var(--muted)]">
-        Tom neutro indica dia sem gastos; tons mais escuros indicam maior valor.
+        Tom neutro indica valor líquido zero ou crédito líquido; tons mais
+        escuros indicam maior despesa líquida.
       </p>
     </section>
   );

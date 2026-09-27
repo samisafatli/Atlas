@@ -43,7 +43,7 @@ export function CategoryBreakdown({
     >
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-medium" id="category-title">
-          Despesas por categoria
+          Despesas líquidas por categoria
         </h2>
         <p className="text-sm text-[var(--muted)]">
           Total: {formatCents(total)}
@@ -81,7 +81,9 @@ export function CategoryBreakdown({
                 >
                   <div
                     className="h-full rounded-full bg-[var(--accent)]"
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                    style={{
+                      width: `${Math.max(0, Math.min(percentage, 100))}%`,
+                    }}
                   />
                 </div>
               </li>
@@ -93,6 +95,10 @@ export function CategoryBreakdown({
           Sem despesas neste mês.
         </p>
       )}
+      <p className="mt-4 text-xs text-[var(--muted)]">
+        Créditos reduzem a categoria atribuída. Revise créditos sem categoria;
+        percentuais podem ser negativos ou superar 100% quando há abatimentos.
+      </p>
     </section>
   );
 }

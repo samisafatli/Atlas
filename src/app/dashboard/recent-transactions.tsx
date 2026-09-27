@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatCents } from "@/lib/finance-format";
+import { typeLabels, transactionSign } from "@/lib/transaction-types";
 
 type RecentTransaction = {
   id: string;
@@ -52,12 +53,14 @@ export function RecentTransactions({
                     timeZone: "UTC",
                   }).format(transaction.occurredAt)}{" "}
                   · {transaction.category?.name ?? "Sem categoria"}
+                  {" · "}
+                  {typeLabels[transaction.type]}
                 </p>
               </div>
               <span
-                className={`whitespace-nowrap text-sm font-semibold ${transaction.type === "INCOME" ? "text-emerald-800" : "text-rose-800"}`}
+                className={`whitespace-nowrap text-sm font-semibold ${transaction.type === "EXPENSE" ? "text-rose-800" : transaction.type === "TRANSFER" ? "text-slate-600" : "text-emerald-800"}`}
               >
-                {transaction.type === "INCOME" ? "+ " : "− "}
+                {transactionSign(transaction.type)}
                 {formatCents(
                   transaction.amountCents,
                   transaction.account.currency,

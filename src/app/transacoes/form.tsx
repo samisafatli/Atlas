@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createTransaction, updateTransaction } from "./actions";
+import { categoryType } from "@/lib/transaction-types";
 
 type Props = {
   categories: { id: string; name: string; type: string }[];
@@ -94,13 +95,14 @@ export function TransactionForm({
               !categories.some(
                 (category) =>
                   category.id === categoryId &&
-                  category.type === event.target.value,
+                  category.type === categoryType(event.target.value),
               )
             ) {
               setCategoryId(
                 requireCategory
                   ? (categories.find(
-                      (category) => category.type === event.target.value,
+                      (category) =>
+                        category.type === categoryType(event.target.value),
                     )?.id ?? "")
                   : "",
               );
@@ -110,20 +112,26 @@ export function TransactionForm({
         >
           <option value="EXPENSE">Despesa</option>
           <option value="INCOME">Receita</option>
+          <option value="REFUND">Crédito / estorno (reduz despesa)</option>
+          <option value="TRANSFER">
+            Transferência / pagamento de fatura (fora do resultado)
+          </option>
         </select>
       </label>
       <label className="grid gap-2 text-sm font-medium">
         Categoria
         <select
           name="categoryId"
-          required={requireCategory}
+          required={requireCategory && type !== "TRANSFER"}
           value={categoryId}
           onChange={(event) => setCategoryId(event.target.value)}
           className="min-h-11 rounded-lg border border-[var(--line)] px-3 font-normal"
         >
-          {!requireCategory ? <option value="">Sem categoria</option> : null}
+          {!requireCategory || type === "TRANSFER" ? (
+            <option value="">Sem categoria</option>
+          ) : null}
           {categories
-            .filter((category) => category.type === type)
+            .filter((category) => category.type === categoryType(type))
             .map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}

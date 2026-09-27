@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { sourceLabels } from "@/lib/nubank-csv";
+export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Histórico de importações — Atlas" };
 
@@ -33,6 +35,14 @@ export default async function ImportHistoryPage() {
             >
               <div>
                 <p className="font-medium">{item.filename}</p>
+                <p className="text-sm">
+                  {item.sourceType === "LEGACY"
+                    ? "Importação antiga — revisar interpretação"
+                    : sourceLabels[
+                        item.sourceType as keyof typeof sourceLabels
+                      ]}{" "}
+                  · versão {item.parserVersion}
+                </p>
                 <p className="mt-1 text-sm text-[var(--muted)]">
                   {new Intl.DateTimeFormat("pt-BR", {
                     dateStyle: "medium",

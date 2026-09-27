@@ -4,13 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { transactionFingerprint } from "@/lib/transaction-fingerprint";
 import { existingImportFingerprints } from "@/lib/import-deduplication";
 import { matchCategoryRule, sortCategoryRules } from "@/lib/category-rules";
+import type { ImportedTransaction } from "@/lib/nubank-csv";
+import { categoryType } from "@/lib/transaction-types";
 
-type Candidate = {
-  date: string;
-  description: string;
-  amountCents: string;
-  type: "INCOME" | "EXPENSE";
-};
+type Candidate = ImportedTransaction;
 
 export async function countImportDuplicates(
   transactions: Candidate[],
@@ -55,7 +52,7 @@ export async function countImportDuplicates(
     .flatMap((transaction) => {
       const match = matchCategoryRule(
         transaction.description,
-        transaction.type,
+        categoryType(transaction.type) ?? "TRANSFER",
         rules,
       );
       return match

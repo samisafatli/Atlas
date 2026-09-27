@@ -12,14 +12,14 @@ export function OverviewCards({
   const balance = income - expenses;
   const cards = [
     { label: "Receitas", amount: income, tone: "text-emerald-800" },
-    { label: "Despesas", amount: expenses, tone: "text-rose-800" },
+    { label: "Despesas líquidas", amount: expenses, tone: "text-rose-800" },
     {
       label: "Resultado do período",
       amount: balance,
       tone: balance >= 0n ? "text-emerald-800" : "text-rose-800",
     },
     {
-      label: "Saldo calculado",
+      label: "Resultado acumulado",
       amount: cumulativeBalance,
       tone: cumulativeBalance >= 0n ? "text-emerald-800" : "text-rose-800",
     },
@@ -37,10 +37,10 @@ export function OverviewCards({
           >
             {formatCents(card.amount)}
           </p>
-          {card.label === "Saldo calculado" ? (
+          {card.label === "Resultado acumulado" ? (
             <p className="mt-2 text-xs text-[var(--muted)]">
-              Receitas menos despesas registradas até o fim do mês selecionado.
-              Não inclui saldo inicial nem patrimônio.
+              Receitas menos despesas líquidas até o fim do mês. Não é saldo
+              bancário; não inclui saldo inicial nem patrimônio.
             </p>
           ) : null}
         </article>

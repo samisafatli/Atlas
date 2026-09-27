@@ -93,6 +93,8 @@ model Transaction {
   importId    String?
   importedIn  Import?   @relation(fields: [importId], references: [id], onDelete: SetNull)
   fingerprint String?   @unique
+  sourceType  String    @default("MANUAL")
+  externalId  String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -107,5 +109,7 @@ model Import {
   filename         String
   importedAt       DateTime      @default(now())
   transactionCount Int
+  sourceType       String        @default("LEGACY")
+  parserVersion    Int           @default(1)
   transactions     Transaction[]
 }

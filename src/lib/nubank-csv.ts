@@ -1,8 +1,16 @@
+import type { TransactionType } from "./transaction-types";
+export type ImportSource = "CREDIT_CARD" | "BANK_STATEMENT";
+export const sourceLabels = {
+  CREDIT_CARD: "Fatura de cartão",
+  BANK_STATEMENT: "Extrato da conta (débito, Pix e receitas)",
+};
 export type ImportedTransaction = {
   date: string;
   description: string;
   amountCents: string;
-  type: "INCOME" | "EXPENSE";
+  type: TransactionType;
+  sourceType: ImportSource;
+  externalId: string | null;
 };
 
 function parseRows(input: string): string[][] {
@@ -32,6 +40,7 @@ function parseRows(input: string): string[][] {
     row.push(field);
     if (row.some((cell) => cell.trim())) rows.push(row);
   }
+  if (quoted) throw new Error("CSV inválido: aspas não fechadas.");
   return rows;
 }
 
@@ -85,6 +94,20 @@ export function parseNubankCsv(contents: string): ImportedTransaction[] {
   const [headers, ...rows] = parseRows(contents);
   if (!headers) throw new Error("O arquivo CSV está vazio.");
   const normalized = headers.map(normalizeHeader);
+  const sourceType: ImportSource =
+    normalized.includes("title") &&
+    normalized.includes("amount") &&
+    normalized.includes("date")
+      ? "CREDIT_CARD"
+      : normalized.includes("descricao") &&
+          normalized.includes("valor") &&
+          normalized.includes("data")
+        ? "BANK_STATEMENT"
+        : (() => {
+            throw new Error(
+              "Formato desconhecido. Use a fatura Nubank (date,title,amount) ou o extrato da conta (Data,Valor,Descrição). Nenhuma linha foi importada.",
+            );
+          })();
   const dateIndex = normalized.findIndex((header) =>
     ["data", "date"].includes(header),
   );
@@ -92,25 +115,54 @@ export function parseNubankCsv(contents: string): ImportedTransaction[] {
     ["valor", "amount"].includes(header),
   );
   const descriptionIndex = normalized.findIndex((header) =>
-    ["descricao", "description", "identificacao", "title"].includes(header),
+    ["descricao", "description", "title"].includes(header),
   );
   if (dateIndex < 0 || amountIndex < 0 || descriptionIndex < 0)
     throw new Error(
       "Não encontrei as colunas de data, valor e descrição do CSV do Nubank.",
     );
 
-  return rows.flatMap((row) => {
+  const idIndex = normalized.indexOf("identificador");
+  return rows.map((row, index) => {
     const date = parseDate(row[dateIndex] ?? "");
     const amount = parseAmount(row[amountIndex] ?? "");
     const description = (row[descriptionIndex] ?? "").trim();
-    if (!date || amount === null || !description) return [];
-    return [
-      {
-        date,
-        description,
-        amountCents: (amount < 0n ? -amount : amount).toString(),
-        type: amount < 0n ? ("EXPENSE" as const) : ("INCOME" as const),
-      },
-    ];
+    if (
+      row.length !== headers.length ||
+      !date ||
+      amount === null ||
+      !description ||
+      description.length > 300
+    )
+      throw new Error(
+        `Linha ${index + 2} inválida: confira data, descrição e valor. Nenhuma linha foi descartada silenciosamente.`,
+      );
+    const normalizedDescription = normalizeHeader(description).replace(
+      /\s+/g,
+      " ",
+    );
+    const type: TransactionType =
+      sourceType === "CREDIT_CARD"
+        ? amount > 0n
+          ? "EXPENSE"
+          : normalizedDescription === "pagamento recebido"
+            ? "TRANSFER"
+            : "REFUND"
+        : amount < 0n &&
+            /^(pagamento (de |da )?fatura|pagamento de cartao)(\b|$)/.test(
+              normalizedDescription,
+            )
+          ? "TRANSFER"
+          : amount < 0n
+            ? "EXPENSE"
+            : "INCOME";
+    return {
+      date,
+      description,
+      amountCents: (amount < 0n ? -amount : amount).toString(),
+      type,
+      sourceType,
+      externalId: idIndex >= 0 ? row[idIndex].trim() || null : null,
+    };
   });
 }

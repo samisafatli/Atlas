@@ -4,6 +4,8 @@ import { saveNubankImport } from "./actions";
 import type { ImportedTransaction } from "@/lib/nubank-csv";
 import { useEffect, useState } from "react";
 import { countImportDuplicates } from "./duplicate-count";
+import { ImportSummary } from "./summary";
+import { sourceLabels } from "@/lib/nubank-csv";
 
 export function SaveImportForm({
   accounts,
@@ -15,6 +17,7 @@ export function SaveImportForm({
     transactions: ImportedTransaction[];
   } | null>(null);
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
+  const [error, setError] = useState("");
   const [counts, setCounts] = useState<{
     existing: number;
     newCount: number;
@@ -24,7 +27,12 @@ export function SaveImportForm({
     const timer = window.setTimeout(() => {
       try {
         const saved = sessionStorage.getItem("atlas-import-preview");
-        if (saved)
+        if (
+          saved &&
+          ["CREDIT_CARD", "BANK_STATEMENT"].includes(
+            JSON.parse(saved)?.transactions?.[0]?.sourceType,
+          )
+        )
           setPreview(
             JSON.parse(saved) as {
               filename: string;
@@ -45,6 +53,12 @@ export function SaveImportForm({
         (result) => {
           if (active) setCounts(result);
         },
+        () => {
+          if (active)
+            setError(
+              "Não foi possível verificar duplicatas. Volte à prévia e tente novamente.",
+            );
+        },
       );
     }, 0);
     return () => {
@@ -56,7 +70,8 @@ export function SaveImportForm({
     return (
       <div className="grid gap-4">
         <p className="text-sm text-[var(--muted)]" role="status">
-          Carregando a prévia selecionada…
+          Selecione novamente o CSV para gerar uma prévia com o formato
+          atualizado.
         </p>
         <a className="text-sm text-[var(--accent)] underline" href="/importar">
           Voltar à prévia
@@ -78,6 +93,11 @@ export function SaveImportForm({
         {preview.transactions.length} transações prontas para importar do
         arquivo <strong>{preview.filename}</strong>.
       </p>
+      <p className="font-medium">
+        {sourceLabels[preview.transactions[0].sourceType]}
+      </p>
+      <ImportSummary transactions={preview.transactions} />
+      {error ? <p role="alert">{error}</p> : null}
       <label className="grid gap-2 text-sm font-medium">
         Conta de destino
         <select

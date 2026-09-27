@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatCents } from "@/lib/finance-format";
+import { expenseAmount } from "@/lib/transaction-types";
 
 type Entry = {
   type: string;
@@ -28,9 +29,13 @@ export function MonthlyClose({
   const totals = (entries: Entry[]) => {
     const result = new Map<string, bigint>();
     for (const entry of entries)
-      if (entry.type === "EXPENSE") {
+      if (["EXPENSE", "REFUND"].includes(entry.type)) {
         const name = entry.category?.name ?? "Sem categoria";
-        result.set(name, (result.get(name) ?? 0n) + entry.amountCents);
+        result.set(
+          name,
+          (result.get(name) ?? 0n) +
+            expenseAmount(entry.type, entry.amountCents),
+        );
       }
     return result;
   };
@@ -62,16 +67,16 @@ export function MonthlyClose({
           Receitas<strong className="mt-1 block">{formatCents(income)}</strong>
         </p>
         <p className="rounded-lg bg-[#f7f8f5] p-3">
-          Despesas
+          Despesas líquidas
           <strong className="mt-1 block">{formatCents(expenses)}</strong>
         </p>
         <p className="rounded-lg bg-[#f7f8f5] p-3">
-          Economizado
+          Resultado
           <strong className="mt-1 block">{formatCents(savings)}</strong>
         </p>
       </div>
       <p className="mt-4 text-sm text-[var(--muted)]">
-        Taxa de poupança:{" "}
+        Resultado / receitas informadas:{" "}
         {savingsRate === null
           ? "— (sem receitas)"
           : `${savingsRate.toFixed(2).replace(".", ",")}%`}
