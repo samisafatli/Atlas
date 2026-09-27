@@ -4,9 +4,55 @@ Aplicativo financeiro pessoal local-first com transações manuais, importação
 Nubank CSV, categorias e regras, dashboard mensal, identificação de recorrências,
 histórico patrimonial e backup/restauração em JSON.
 
-O saldo calculado no dashboard soma receitas menos despesas registradas até o
-fim do mês selecionado. Não representa saldo bancário conciliado: não inclui
-saldo inicial, contas patrimoniais ou transações que ainda não foram cadastradas.
+O resultado acumulado no dashboard soma receitas menos despesas líquidas até o
+fim do mês selecionado. Créditos/estornos reduzem despesas; transferências e
+pagamentos de fatura ficam fora do resultado. Isso não é saldo bancário:
+não inclui saldo inicial, contas patrimoniais nem movimentações ausentes.
+
+## Fatura e extrato da conta
+
+- **Fatura:** colunas `date,title,amount`. Cobranças positivas são despesas;
+  negativos são créditos/estornos, exceto `Pagamento recebido`, tratado como
+  pagamento de fatura, sem efeito no resultado.
+- **Conta:** colunas `Data,Valor,Descrição` e, quando disponível, `Identificador`.
+  Débito/Pix enviados são despesas; valores recebidos são receitas. Descrições
+  explícitas de pagamento de fatura são transferências. Revise Pix entre suas
+  próprias contas e reembolsos em **Transações → Editar → Tipo**: o texto sozinho
+  não comprova quem é o titular da outra conta.
+- Importe os dois arquivos para cobrir crédito e débito. O preview mostra a
+  origem e os totais antes de salvar. Arquivos ambíguos e linhas inválidas geram
+  erro; nenhuma linha é descartada silenciosamente.
+- Parcelas usam valor e data presentes no CSV; não há projeção de parcelas
+  futuras, conciliação automática ou cálculo do saldo da fatura a pagar.
+- A deduplicação separa conta/origem. Usa o identificador bancário quando
+  disponível; sem identificador, lançamentos idênticos em data, descrição,
+  valor e natureza continuam indistinguíveis. Confira esse caso no preview.
+
+## Atualizar e reparar uma importação antiga
+
+Após atualizar o código, aplique as migrations e gere o client:
+
+```bash
+npx prisma migrate deploy --config prisma7.config.ts
+npx prisma generate --config prisma7.config.ts
+```
+
+Reinicie o servidor. Importações da versão antiga aparecem no histórico como
+pendentes de revisão e bloqueiam novas importações na mesma conta até o reparo.
+Com o ID do lote original, execute:
+
+```bash
+node scripts/repair-import.mjs ID_DO_LOTE "caminho/arquivo-original.csv"
+```
+
+O comando cria uma cópia SQLite consistente em `backups/` antes de atualizar o
+lote, preserva IDs e categorias compatíveis e compara cada linha com os dados
+originais. Divergências, edições manuais ou correspondências ambíguas cancelam
+a operação inteira. Executar novamente um lote corrigido não altera os dados.
+O CSV deve ser o original completo; não use um arquivo de outro período.
+
+Backups JSON novos usam versão 2, incluindo origem e identificador. A restauração
+aceita também versão 1 e sinaliza os lotes antigos como pendentes de revisão.
 
 ## Requisitos
 
