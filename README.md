@@ -117,6 +117,17 @@ de exemplo.
 
 ## Backup e restauração
 
+Em **Backup → Limpar dados**, escolha limpar somente lançamentos/importações
+(incluindo lançamentos manuais, preservando contas, categorias, regras e patrimônio)
+ou resetar tudo (recriando apenas a conta principal e as categorias padrão).
+Digite `LIMPAR` e confirme a operação. Antes de excluir, o Atlas salva um JSON
+completo em `backups/atlas-pre-clear-*.json`. Se a cópia falhar, nada é apagado.
+Os CSVs e backups existentes não são removidos.
+
+Restaurar um JSON substitui toda a base pelo estado do arquivo, sem mesclar dados.
+Para desfazer uma limpeza, selecione seu JSON de proteção no formulário de
+restauração. A própria restauração também cria uma cópia do estado anterior.
+
 Em **Backup** (`/backup`), baixe um JSON versionado com transações, categorias, contas, regras e snapshots patrimoniais. O navegador salva o arquivo na pasta de downloads configurada no sistema.
 
 Ao restaurar, o Atlas valida a versão e as referências antes de substituir dados. Antes da troca, salva uma cópia de proteção em `backups/atlas-pre-restore-<data>.json`, dentro da pasta do banco SQLite. Com a configuração padrão `file:./finance.db`, esse diretório fica na raiz do projeto. Guarde também os arquivos JSON baixados fora do computador para ter uma cópia independente.

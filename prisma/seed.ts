@@ -1,31 +1,7 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma-client.ts";
 
-const accountSeed = {
-  name: "Conta principal",
-  type: "CHECKING",
-  currency: "BRL",
-};
-
-const categorySeeds = [
-  ...[
-    "Alimentação",
-    "Mercado",
-    "Transporte",
-    "Moradia",
-    "Saúde",
-    "Lazer",
-    "Compras",
-    "Assinaturas",
-    "Viagem",
-    "Educação",
-    "Investimentos",
-    "Transferências",
-    "Outros",
-  ].map((name) => ({ name, type: "EXPENSE" })),
-  { name: "Receita", type: "INCOME" },
-  { name: "Salário", type: "INCOME" },
-];
+import { accountSeed, categorySeeds } from "../src/lib/default-data.ts";
 
 async function main() {
   await prisma.account.upsert({

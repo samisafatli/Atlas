@@ -3,6 +3,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { prisma } from "@/lib/prisma";
 import { categoryType } from "./transaction-types";
+import { accountSeed, categorySeeds } from "./default-data";
+import { randomUUID } from "node:crypto";
 
 export const BACKUP_FORMAT = "atlas-backup";
 export const BACKUP_VERSION = 2;
@@ -82,14 +84,49 @@ export function resolveDatabasePath() {
     : resolve(/* turbopackIgnore: true */ process.cwd(), pathname);
 }
 
-export async function saveProtectionBackup(contents: string) {
+export async function saveProtectionBackup(
+  contents: string,
+  operation: "restore" | "clear" = "restore",
+) {
   const databasePath = resolveDatabasePath();
   const backupDirectory = join(dirname(databasePath), "backups");
   await mkdir(backupDirectory, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const filename = `atlas-pre-restore-${stamp}.json`;
+  const filename = `atlas-pre-${operation}-${stamp}-${randomUUID()}.json`;
   await writeFile(join(backupDirectory, filename), contents, { flag: "wx" });
   return join("backups", filename);
+}
+
+export async function clearData(mode: "transactions" | "all") {
+  if (mode !== "transactions" && mode !== "all")
+    throw new Error("Modo inválido.");
+  return prisma.$transaction(
+    async (tx) => {
+      const current = {
+        format: BACKUP_FORMAT,
+        version: BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        data: await readBackupData(tx),
+      };
+      const protectionFile = await saveProtectionBackup(
+        backupJson(current),
+        "clear",
+      );
+      await tx.transaction.deleteMany();
+      await tx.import.deleteMany();
+      if (mode === "all") {
+        await tx.assetSnapshot.deleteMany();
+        await tx.assetAccount.deleteMany();
+        await tx.categoryRule.deleteMany();
+        await tx.category.deleteMany();
+        await tx.account.deleteMany();
+        await tx.account.create({ data: accountSeed });
+        await tx.category.createMany({ data: categorySeeds });
+      }
+      return protectionFile;
+    },
+    { timeout: 120000 },
+  );
 }
 
 type Timed = { id: string; createdAt: string; updatedAt: string };

@@ -648,6 +648,102 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       assert.deepEqual(current.data, original.data);
     },
   );
+  await t.test(
+    "clear modes require confirmation, preserve protection backups and restore data",
+    async () => {
+      const { POST: clearPost } =
+        await import("../src/app/api/backup/clear/route.ts");
+      const before = JSON.parse(
+        backup.backupJson(await backup.createBackupObject()),
+      );
+      const request = (mode, confirmation, origin = "http://localhost") =>
+        new Request("http://localhost/api/backup/clear", {
+          method: "POST",
+          headers: { "content-type": "application/json", origin },
+          body: JSON.stringify({ mode, confirmation }),
+        });
+      assert.equal((await clearPost(request("all", ""))).status, 400);
+      assert.equal((await clearPost(request("invalid", "LIMPAR"))).status, 400);
+      assert.equal(
+        (await clearPost(request("all", "LIMPAR", "http://other.test"))).status,
+        403,
+      );
+      assert.deepEqual(
+        JSON.parse(backup.backupJson(await backup.createBackupObject())).data,
+        before.data,
+      );
+
+      // A file cannot be the parent directory of the backup folder.
+      const originalUrl = process.env.DATABASE_URL;
+      process.env.DATABASE_URL = `${originalUrl}/blocked.db`;
+      try {
+        assert.equal((await clearPost(request("all", "LIMPAR"))).status, 500);
+      } finally {
+        process.env.DATABASE_URL = originalUrl;
+      }
+      assert.deepEqual(
+        JSON.parse(backup.backupJson(await backup.createBackupObject())).data,
+        before.data,
+      );
+
+      const response = await clearPost(request("transactions", "LIMPAR"));
+      assert.equal(response.status, 200);
+      const { protectionFile } = await response.json();
+      const protectedDocument = backup.parseBackup(
+        await readFile(join(directory, protectionFile), "utf8"),
+      );
+      assert.ok(protectedDocument);
+      assert.deepEqual(protectedDocument.data, before.data);
+      const partial = JSON.parse(
+        backup.backupJson(await backup.createBackupObject()),
+      );
+      assert.deepEqual(partial.data, {
+        ...before.data,
+        transactions: [],
+        imports: [],
+      });
+      await backup.restoreBackup(protectedDocument);
+      assert.deepEqual(
+        JSON.parse(backup.backupJson(await backup.createBackupObject())).data,
+        before.data,
+      );
+
+      const fullResponse = await clearPost(request("all", "LIMPAR"));
+      assert.equal(fullResponse.status, 200);
+      const full = JSON.parse(
+        backup.backupJson(await backup.createBackupObject()),
+      );
+      for (const key of [
+        "transactions",
+        "imports",
+        "categoryRules",
+        "assetAccounts",
+        "assetSnapshots",
+        "assetSnapshotValues",
+      ])
+        assert.equal(full.data[key].length, 0);
+      assert.equal(full.data.accounts.length, 1);
+      assert.equal(full.data.accounts[0].name, "Conta principal");
+      const { categorySeeds } = await import("../src/lib/default-data.ts");
+      assert.deepEqual(
+        full.data.categories
+          .map(({ name, type }) => ({ name, type }))
+          .sort((a, b) => a.name.localeCompare(b.name)),
+        [...categorySeeds].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      const fullProtection = backup.parseBackup(
+        await readFile(
+          join(directory, (await fullResponse.json()).protectionFile),
+          "utf8",
+        ),
+      );
+      await backup.restoreBackup(fullProtection);
+      assert.deepEqual(
+        JSON.parse(backup.backupJson(await backup.createBackupObject())).data,
+        before.data,
+      );
+    },
+  );
   console.info(
     `Isolated test database: ${pathToFileURL(join(directory, "finance.db")).href}`,
   );
