@@ -16,6 +16,7 @@ export const metadata = {
 };
 
 type SearchParams = Promise<{
+  page?: string | string[];
   year?: string | string[];
   month?: string | string[];
   type?: string | string[];
@@ -175,23 +176,44 @@ export default async function TransactionsPage({
       })
     : null;
   const importId = validImport?.id ?? "";
-  const returnTo = `/transacoes${year || month || type || categoryId || day || importId ? `?${new URLSearchParams({ ...(year ? { year } : {}), ...(month ? { month } : {}), ...(type ? { type } : {}), ...(categoryId ? { category: categoryId } : {}), ...(day ? { dia: day } : {}), ...(importId ? { importId } : {}) })}` : ""}`;
-
+  const filters = {
+    ...(year ? { year } : {}),
+    ...(month ? { month } : {}),
+    ...(type ? { type } : {}),
+    ...(categoryId ? { category: categoryId } : {}),
+    ...(day ? { dia: day } : {}),
+    ...(importId ? { importId } : {}),
+  };
+  const where = {
+    ...(dayRange
+      ? { occurredAt: dayRange }
+      : (monthRange ?? yearRange)
+        ? { occurredAt: monthRange ?? yearRange }
+        : {}),
+    ...(type ? { type } : {}),
+    ...(categoryId ? { categoryId } : {}),
+    ...(importId ? { importId } : {}),
+  };
+  const pageSize = 20;
+  const total = await prisma.transaction.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const rawPage = firstValue(params.page) ?? "1";
+  const requestedPage =
+    /^\d+$/.test(rawPage) && Number.isSafeInteger(Number(rawPage))
+      ? Number(rawPage)
+      : 1;
+  const page = Math.max(1, Math.min(requestedPage, pageCount));
+  const offset = (page - 1) * pageSize;
+  const pageHref = (value: number) =>
+    `/transacoes?${new URLSearchParams({ ...filters, page: String(value) })}`;
+  const returnTo = pageHref(page);
   const transactions = await prisma.transaction.findMany({
-    where: {
-      ...(dayRange
-        ? { occurredAt: dayRange }
-        : (monthRange ?? yearRange)
-          ? { occurredAt: monthRange ?? yearRange }
-          : {}),
-      ...(type ? { type } : {}),
-      ...(categoryId ? { categoryId } : {}),
-      ...(importId ? { importId } : {}),
-    },
+    where,
     include: { account: true, category: true },
-    orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+    skip: offset,
+    take: pageSize,
   });
-
   const hasFilters = Boolean(
     year || month || type || categoryId || day || importId,
   );
@@ -275,6 +297,9 @@ export default async function TransactionsPage({
             className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1fr_1fr_1.2fr_auto_auto] lg:items-end"
             method="get"
           >
+            {importId ? (
+              <input type="hidden" name="importId" value={importId} />
+            ) : null}
             <PeriodFilter
               key={`${year}-${month}-${day}`}
               year={year}
@@ -337,14 +362,15 @@ export default async function TransactionsPage({
             <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4 sm:px-6">
               <h2 className="font-medium">Todas as transações</h2>
               <span className="text-sm text-[var(--muted)]">
-                {transactions.length}{" "}
-                {transactions.length === 1 ? "registro" : "registros"}
+                {total > 0
+                  ? `${offset + 1}–${offset + transactions.length} de ${total}`
+                  : 0}{" "}
+                {total === 1 ? "registro" : "registros"}
                 {day
                   ? ` em ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}`
                   : ""}
               </span>
             </div>
-
             {transactions.length === 0 ? (
               <div className="px-6 py-16 text-center">
                 <div
@@ -498,6 +524,46 @@ export default async function TransactionsPage({
                 </table>
               </div>
             )}
+            {total > 0 ? (
+              <nav
+                aria-label="Paginação das transações"
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-4"
+              >
+                {page > 1 ? (
+                  <Link
+                    className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+                    href={pageHref(page - 1)}
+                  >
+                    ← Anterior
+                  </Link>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    className="px-4 text-sm text-[var(--muted)] opacity-50"
+                  >
+                    ← Anterior
+                  </span>
+                )}
+                <span className="text-sm text-[var(--muted)]">
+                  Página {page} de {pageCount}
+                </span>
+                {page < pageCount ? (
+                  <Link
+                    className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+                    href={pageHref(page + 1)}
+                  >
+                    Próxima →
+                  </Link>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    className="px-4 text-sm text-[var(--muted)] opacity-50"
+                  >
+                    Próxima →
+                  </span>
+                )}
+              </nav>
+            ) : null}{" "}
           </div>
         </section>
       </div>
