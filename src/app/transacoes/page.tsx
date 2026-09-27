@@ -199,21 +199,6 @@ export default async function TransactionsPage({
   return (
     <main className="min-h-screen px-5 py-8 sm:px-8 sm:py-12">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-10 flex flex-wrap items-center justify-between gap-4">
-          <Link
-            className="text-sm font-semibold tracking-[0.2em] text-[var(--accent)] uppercase"
-            href="/"
-          >
-            Atlas
-          </Link>
-          <Link
-            className="text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]"
-            href="/"
-          >
-            Voltar ao início
-          </Link>
-        </header>
-
         <section aria-labelledby="transactions-title">
           <div className="mb-8">
             <p className="mb-3 text-sm text-[var(--muted)]">

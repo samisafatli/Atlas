@@ -11,17 +11,6 @@ export default async function ImportHistoryPage() {
   });
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-10 flex justify-between">
-        <Link
-          className="text-sm font-semibold tracking-[0.2em] text-[var(--accent)] uppercase"
-          href="/"
-        >
-          Atlas
-        </Link>
-        <Link className="text-sm text-[var(--muted)]" href="/transacoes">
-          ← Transações
-        </Link>
-      </header>
       <h1 className="text-3xl font-medium">Histórico de importações</h1>
       <p className="mt-2 text-sm text-[var(--muted)]">
         Arquivos processados e quantidade de novas transações gravadas.

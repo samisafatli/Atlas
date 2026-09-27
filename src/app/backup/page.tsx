@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { RestoreForm } from "./restore-form";
 
 export const metadata = { title: "Backup e restauração — Atlas" };
@@ -6,17 +5,6 @@ export const metadata = { title: "Backup e restauração — Atlas" };
 export default function BackupPage() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-10 flex justify-between">
-        <Link
-          className="text-sm font-semibold tracking-[0.2em] text-[var(--accent)] uppercase"
-          href="/"
-        >
-          Atlas
-        </Link>
-        <Link className="text-sm text-[var(--muted)]" href="/dashboard">
-          ← Dashboard
-        </Link>
-      </header>
       <h1 className="text-3xl font-medium">Backup e restauração</h1>
       <section className="mt-7 grid gap-6">
         <article className="rounded-2xl border border-[var(--line)] bg-white/80 p-5">

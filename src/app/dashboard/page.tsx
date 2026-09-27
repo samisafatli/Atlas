@@ -99,46 +99,6 @@ export default async function DashboardPage({
   );
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-10 flex flex-wrap items-center justify-between gap-4">
-        <Link
-          className="text-sm font-semibold tracking-[0.2em] text-[var(--accent)] uppercase"
-          href="/"
-        >
-          Atlas
-        </Link>
-        <nav className="flex flex-wrap gap-4 text-sm">
-          <Link
-            className="text-[var(--muted)] hover:text-[var(--foreground)]"
-            href="/transacoes"
-          >
-            Transações
-          </Link>
-          <Link
-            className="text-[var(--muted)] hover:text-[var(--foreground)]"
-            href="/regras"
-          >
-            Regras
-          </Link>
-          <Link
-            className="text-[var(--muted)] hover:text-[var(--foreground)]"
-            href="/recorrentes"
-          >
-            Recorrentes
-          </Link>
-          <Link
-            className="text-[var(--muted)] hover:text-[var(--foreground)]"
-            href="/patrimonio"
-          >
-            Patrimônio
-          </Link>
-          <Link
-            className="text-[var(--muted)] hover:text-[var(--foreground)]"
-            href="/backup"
-          >
-            Backup
-          </Link>
-        </nav>
-      </header>
       <section>
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>

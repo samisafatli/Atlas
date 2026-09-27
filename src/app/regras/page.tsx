@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { deleteCategoryRule, saveCategoryRule } from "./actions";
 
@@ -19,17 +18,6 @@ export default async function CategoryRulesPage({
   ]);
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-10 flex justify-between">
-        <Link
-          className="text-sm font-semibold tracking-[0.2em] text-[var(--accent)] uppercase"
-          href="/"
-        >
-          Atlas
-        </Link>
-        <Link className="text-sm text-[var(--muted)]" href="/transacoes">
-          ← Transações
-        </Link>
-      </header>
       <h1 className="mb-3 text-3xl font-medium">Regras automáticas</h1>
       <p className="mb-7 text-sm leading-6 text-[var(--muted)]">
         Regras determinísticas são aplicadas somente durante novas importações.
