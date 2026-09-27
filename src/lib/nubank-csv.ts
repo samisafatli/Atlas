@@ -52,6 +52,19 @@ function normalizeHeader(header: string) {
     .toLowerCase();
 }
 
+export function bankTransactionType(
+  description: string,
+  amount: bigint,
+): TransactionType {
+  const normalized = normalizeHeader(description).replace(/\s+/g, " ");
+  return amount < 0n &&
+    /^(pagamento (de |da )?fatura|pagamento de cartao)(\b|$)/.test(normalized)
+    ? "TRANSFER"
+    : amount < 0n
+      ? "EXPENSE"
+      : "INCOME";
+}
+
 function parseDate(value: string) {
   const text = value.trim();
   const br = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -148,14 +161,7 @@ export function parseNubankCsv(contents: string): ImportedTransaction[] {
           : normalizedDescription === "pagamento recebido"
             ? "TRANSFER"
             : "REFUND"
-        : amount < 0n &&
-            /^(pagamento (de |da )?fatura|pagamento de cartao)(\b|$)/.test(
-              normalizedDescription,
-            )
-          ? "TRANSFER"
-          : amount < 0n
-            ? "EXPENSE"
-            : "INCOME";
+        : bankTransactionType(description, amount);
     return {
       date,
       description,

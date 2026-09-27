@@ -744,6 +744,73 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
     },
   );
+  await t.test(
+    "OFX supports XML and SGML, rejects invalid files and deduplicates with CSV",
+    async () => {
+      const { parseOfx, decodeOfx } = await import("../src/lib/ofx.ts");
+      const make = (xml = false) => {
+        const tag = (key, value) =>
+          `<${key}>${value}${xml ? `</${key}>` : "\n"}`;
+        const row = (id, amount, description) =>
+          `<STMTTRN>${tag("DTPOSTED", "20260501233000[-3:BRT]")}${tag("TRNAMT", amount)}${tag("FITID", id)}${tag("MEMO", description)}</STMTTRN>`;
+        return `<OFX><STMTRS>${tag("CURDEF", "BRL")}<BANKTRANLIST>${row("ofx-income", "1200.00", "Receita")}${row("ofx-expense", "-10.25", "Mercado &amp; Cia")}${row("ofx-payment", "-200", "Pagamento de fatura")}</BANKTRANLIST></STMTRS></OFX>`;
+      };
+      const rows = parseOfx(make());
+      assert.deepEqual(parseOfx(make(true)), rows);
+      assert.deepEqual(
+        rows.map((r) => r.type),
+        ["INCOME", "EXPENSE", "TRANSFER"],
+      );
+      assert.equal(rows[1].description, "Mercado & Cia");
+      assert.equal(rows[1].amountCents, "1025");
+      assert.equal(rows[0].date, "2026-05-01");
+      const encoded = new TextEncoder().encode(make());
+      assert.deepEqual(parseOfx(decodeOfx(encoded.buffer)), rows);
+      const legacyBytes = Uint8Array.from(
+        Buffer.from("CHARSET:1252\n<MEMO>Saúde", "latin1"),
+      );
+      assert.match(decodeOfx(legacyBytes.buffer), /Saúde/);
+      for (const invalid of [
+        make().replace("BRL", "USD"),
+        make().replace("20260501", "20260230"),
+        make().replace("-10.25", "-10.251"),
+        make().replace("ofx-expense", "ofx-income"),
+        make().replace("</STMTTRN>", ""),
+        make().replace("</OFX>", ""),
+        make().replace("<FITID>ofx-income", "<FITID>"),
+        "<!DOCTYPE OFX>" + make(),
+        make().replace("<STMTRS>", "<STMTRS><CORRECTFITID>x</CORRECTFITID>"),
+      ])
+        assert.throws(() => parseOfx(invalid));
+      const ofxAccount = await prisma.account.create({
+        data: { name: "OFX test", type: "CHECKING" },
+      });
+      const fields = {
+        accountId: ofxAccount.id,
+        filename: "test.ofx",
+        transactions: JSON.stringify(rows),
+      };
+      await redirected(
+        () => saveNubankImport(form(fields)),
+        "quantidade=3&duplicadas=0",
+      );
+      await redirected(
+        () => saveNubankImport(form(fields)),
+        "quantidade=0&duplicadas=3",
+      );
+      const csv = parseNubankCsv(
+        "Data,Valor,Identificador,Descrição\n01/05/2026,-10.25,ofx-expense,Mercado & Cia",
+      );
+      assert.equal(
+        (await countImportDuplicates(csv, ofxAccount.id)).existing,
+        1,
+      );
+      assert.equal(
+        await prisma.transaction.count({ where: { accountId: ofxAccount.id } }),
+        3,
+      );
+    },
+  );
   console.info(
     `Isolated test database: ${pathToFileURL(join(directory, "finance.db")).href}`,
   );

@@ -9,6 +9,7 @@ import {
   type ImportedTransaction,
 } from "@/lib/nubank-csv";
 import { typeLabels, transactionSign } from "@/lib/transaction-types";
+import { decodeOfx, parseOfx } from "@/lib/ofx";
 import { ImportSummary } from "./summary";
 
 function formatAmount(cents: string) {
@@ -30,12 +31,16 @@ export function ImportPreview() {
     setReady(false);
     setTransactions([]);
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      setError("Selecione um arquivo .csv exportado pelo Nubank.");
+    if (!/\.(csv|ofx)$/i.test(file.name)) {
+      setError("Selecione um arquivo .csv ou .ofx exportado pelo Nubank.");
       return;
     }
     try {
-      const entries = parseNubankCsv(await file.text());
+      if (file.size > 20 * 1024 * 1024)
+        throw new Error("O arquivo excede o limite de 20 MB.");
+      const entries = file.name.toLowerCase().endsWith(".ofx")
+        ? parseOfx(decodeOfx(await file.arrayBuffer()))
+        : parseNubankCsv(await file.text());
       if (entries.length === 0) {
         setError(
           "Não encontrei transações válidas nesse arquivo. Confira as colunas e os dados.",
@@ -48,7 +53,7 @@ export function ImportPreview() {
       setError(
         reason instanceof Error
           ? reason.message
-          : "Não foi possível ler esse CSV.",
+          : "Não foi possível ler esse arquivo.",
       );
     }
   }
@@ -72,13 +77,13 @@ export function ImportPreview() {
         }}
         className="grid cursor-pointer gap-2 rounded-2xl border border-dashed border-[var(--accent)] bg-white/70 p-8 text-center"
       >
-        <span className="font-medium">Selecione o CSV do Nubank</span>
+        <span className="font-medium">Selecione o CSV ou OFX do Nubank</span>
         <span className="text-sm text-[var(--muted)]">
-          Clique para escolher ou arraste um CSV. O arquivo será lido localmente
-          para montar a prévia.
+          Clique para escolher ou arraste um CSV ou OFX. O arquivo será lido
+          localmente para montar a prévia.
         </span>
         <input
-          accept=".csv,text/csv"
+          accept=".csv,.ofx,text/csv,application/x-ofx"
           className="mx-auto mt-2 max-w-full text-sm"
           type="file"
           onChange={(event) => selectFile(event.target.files?.[0])}

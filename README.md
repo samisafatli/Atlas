@@ -11,6 +11,15 @@ não inclui saldo inicial, contas patrimoniais nem movimentações ausentes.
 
 ## Fatura e extrato da conta
 
+- **OFX da conta:** envie o `.ofx` em **Importar arquivos**, no mesmo fluxo do
+  CSV. Aceita um extrato bancário em BRL por arquivo, com campos XML ou SGML.
+  Mantém a data bancária e usa `FITID` para evitar reimportações na mesma conta.
+  CSV e OFX só são reconhecidos como o mesmo lançamento quando compartilham o
+  identificador. Não importe a mesma movimentação nos dois formatos quando os
+  identificadores forem diferentes. Pagamento explícito de fatura fica fora do
+  resultado; revise transferências próprias e reembolsos antes de analisar as
+  receitas. Saldo informado pelo OFX não é importado como receita ou patrimônio.
+
 - **Fatura:** colunas `date,title,amount`. Cobranças positivas são despesas;
   negativos são créditos/estornos, exceto `Pagamento recebido`, tratado como
   pagamento de fatura, sem efeito no resultado.

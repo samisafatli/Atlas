@@ -70,7 +70,7 @@ export function SaveImportForm({
     return (
       <div className="grid gap-4">
         <p className="text-sm text-[var(--muted)]" role="status">
-          Selecione novamente o CSV para gerar uma prévia com o formato
+          Selecione novamente o CSV ou OFX para gerar uma prévia com o formato
           atualizado.
         </p>
         <a className="text-sm text-[var(--accent)] underline" href="/importar">

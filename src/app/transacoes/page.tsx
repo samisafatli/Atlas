@@ -249,7 +249,7 @@ export default async function TransactionsPage({
                 className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
                 href="/importar"
               >
-                Importar CSV
+                Importar arquivos
               </Link>
               <Link
                 className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
