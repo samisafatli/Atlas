@@ -24,14 +24,14 @@ Para corrigir lançamentos antigos do extrato, execute `node scripts/repair-rdb.
 o procedimento cria um backup JSON antes de reclassificar, mantém os valores e
 identificadores e pode ser repetido sem duplicar ou alterar novamente os dados.
 
-A tela **Importar arquivos** aceita seleção ou arraste de vários CSVs/OFXs
+A tela **Importar** aceita seleção ou arraste de vários CSVs/OFXs
 ao mesmo tempo (até 50 arquivos, 20 MB no total e 50.000 lançamentos).
 Revise o resumo por arquivo e escolha uma conta de destino para todo o lote.
 Arquivos de contas diferentes devem ser importados em lotes separados.
 A deduplicação considera o banco e os demais arquivos selecionados. Cada
 arquivo mantém seu registro no histórico; qualquer falha cancela o lote inteiro.
 
-- **OFX da conta:** envie o `.ofx` em **Importar arquivos**, no mesmo fluxo do
+- **OFX da conta:** envie o `.ofx` em **Importar**, no mesmo fluxo do
   CSV. Aceita um extrato bancário em BRL por arquivo, com campos XML ou SGML.
   Mantém a data bancária e usa `FITID` para evitar reimportações na mesma conta.
   CSV e OFX só são reconhecidos como o mesmo lançamento quando compartilham o
@@ -151,7 +151,7 @@ de exemplo.
 
 ## Backup e restauração
 
-Em **Backup → Limpar dados**, escolha limpar somente lançamentos/importações
+Em **Configurações → Backup → Limpar dados**, escolha limpar somente lançamentos/importações
 (incluindo lançamentos manuais, preservando contas, categorias, regras e patrimônio)
 ou resetar tudo (recriando apenas a conta principal e as categorias padrão).
 Digite `LIMPAR` e confirme a operação. Antes de excluir, o Atlas salva um JSON
@@ -162,7 +162,7 @@ Restaurar um JSON substitui toda a base pelo estado do arquivo, sem mesclar dado
 Para desfazer uma limpeza, selecione seu JSON de proteção no formulário de
 restauração. A própria restauração também cria uma cópia do estado anterior.
 
-Em **Backup** (`/backup`), baixe um JSON versionado com transações, categorias, contas, regras e snapshots patrimoniais. O navegador salva o arquivo na pasta de downloads configurada no sistema.
+Em **Configurações → Backup** (`/backup`), baixe um JSON versionado com transações, categorias, contas, regras e snapshots patrimoniais. O navegador salva o arquivo na pasta de downloads configurada no sistema.
 
 Ao restaurar, o Atlas valida a versão e as referências antes de substituir dados. Antes da troca, salva uma cópia de proteção em `backups/atlas-pre-restore-<data>.json`, dentro da pasta do banco SQLite. Com a configuração padrão `file:./finance.db`, esse diretório fica na raiz do projeto. Guarde também os arquivos JSON baixados fora do computador para ter uma cópia independente.
 

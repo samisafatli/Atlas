@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { deleteTransaction } from "./actions";
 
 export function ConfirmDelete({
@@ -18,8 +19,13 @@ export function ConfirmDelete({
       }}
     >
       <input type="hidden" name="id" value={id} />
-      <button className="text-sm text-rose-700 hover:underline" type="submit">
-        Excluir
+      <button
+        aria-label={`Excluir “${description}”`}
+        className="grid size-9 place-items-center rounded-lg text-rose-700 transition hover:bg-rose-50"
+        title="Excluir"
+        type="submit"
+      >
+        <Trash2 aria-hidden="true" className="size-4" />
       </button>
     </form>
   );

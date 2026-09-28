@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getMonthRange, shiftMonth } from "@/lib/finance-format";
 import { OverviewCards } from "./overview-cards";
@@ -98,7 +99,7 @@ export default async function DashboardPage({
               className="grid size-10 place-items-center rounded-full border border-[var(--line)] bg-white/70"
               href={`/dashboard?month=${previousMonth}`}
             >
-              ←
+              <ChevronLeft aria-hidden="true" className="size-5" />
             </Link>
             <p className="min-w-36 text-center font-medium capitalize">
               {monthName(selectedMonth)}
@@ -108,7 +109,7 @@ export default async function DashboardPage({
               className="grid size-10 place-items-center rounded-full border border-[var(--line)] bg-white/70"
               href={`/dashboard?month=${nextMonth}`}
             >
-              →
+              <ChevronRight aria-hidden="true" className="size-5" />
             </Link>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function Pagination({
   page,
@@ -18,17 +19,19 @@ export function Pagination({
     >
       {page > 1 ? (
         <Link
-          className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
           href={previousHref}
         >
-          ← Anterior
+          <ChevronLeft aria-hidden="true" className="size-4" />
+          Anterior
         </Link>
       ) : (
         <span
           aria-disabled="true"
-          className="px-4 text-sm text-[var(--muted)] opacity-50"
+          className="inline-flex items-center gap-1 px-4 text-sm text-[var(--muted)] opacity-50"
         >
-          ← Anterior
+          <ChevronLeft aria-hidden="true" className="size-4" />
+          Anterior
         </span>
       )}
       <span className="text-sm text-[var(--muted)]">
@@ -36,17 +39,19 @@ export function Pagination({
       </span>
       {page < pageCount ? (
         <Link
-          className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
           href={nextHref}
         >
-          Próxima →
+          Próxima
+          <ChevronRight aria-hidden="true" className="size-4" />
         </Link>
       ) : (
         <span
           aria-disabled="true"
-          className="px-4 text-sm text-[var(--muted)] opacity-50"
+          className="inline-flex items-center gap-1 px-4 text-sm text-[var(--muted)] opacity-50"
         >
-          Próxima →
+          Próxima
+          <ChevronRight aria-hidden="true" className="size-4" />
         </span>
       )}
     </nav>

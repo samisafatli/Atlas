@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Inbox, Pencil, Search } from "lucide-react";
 import { ConfirmDelete } from "./confirm-delete";
 import { CategorySelect } from "./category-select";
 import { updateTransactionCategory } from "./actions";
@@ -53,7 +54,11 @@ export function TransactionTable({
         aria-hidden="true"
         className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-[#e9f0eb] text-xl text-[var(--accent)]"
       >
-        {hasFilters ? "⌕" : "—"}
+        {hasFilters ? (
+          <Search className="size-5" />
+        ) : (
+          <Inbox className="size-5" />
+        )}
       </div>
       <h3 className="font-medium">
         {hasFilters
@@ -162,12 +167,14 @@ export function TransactionTable({
                   )}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-3">
+                  <div className="flex justify-end gap-1">
                     <Link
-                      className="text-sm text-[var(--accent)] hover:underline"
+                      aria-label={`Editar “${transaction.description}”`}
+                      className="grid size-9 place-items-center rounded-lg text-[var(--accent)] transition hover:bg-[#e9f0eb]"
                       href={`/transacoes/${transaction.id}/editar`}
+                      title="Editar"
                     >
-                      Editar
+                      <Pencil aria-hidden="true" className="size-4" />
                     </Link>
                     <ConfirmDelete
                       id={transaction.id}

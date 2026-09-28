@@ -11,6 +11,7 @@ import {
 import { typeLabels, transactionSign } from "@/lib/transaction-types";
 import { decodeOfx, parseOfx } from "@/lib/ofx";
 import { ImportSummary } from "./summary";
+import { Upload } from "lucide-react";
 
 function formatAmount(cents: string) {
   return new Intl.NumberFormat("pt-BR", {
@@ -95,6 +96,10 @@ export function ImportPreview() {
         }}
         className="grid cursor-pointer gap-2 rounded-2xl border border-dashed border-[var(--accent)] bg-white/70 p-8 text-center"
       >
+        <Upload
+          aria-hidden="true"
+          className="mx-auto size-6 text-[var(--accent)]"
+        />
         <span className="font-medium">Selecione os CSVs ou OFXs do Nubank</span>
         <span className="text-sm text-[var(--muted)]">
           Selecione vários arquivos ou arraste-os juntos. O lote será lido
