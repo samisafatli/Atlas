@@ -1,4 +1,5 @@
 import type { TransactionType } from "./transaction-types";
+import { rdbTransactionType } from "./transaction-types";
 export type ImportSource = "CREDIT_CARD" | "BANK_STATEMENT";
 export const sourceLabels = {
   CREDIT_CARD: "Fatura de cartão",
@@ -56,6 +57,8 @@ export function bankTransactionType(
   description: string,
   amount: bigint,
 ): TransactionType {
+  const investment = rdbTransactionType(description, amount < 0n);
+  if (investment) return investment;
   const normalized = normalizeHeader(description).replace(/\s+/g, " ");
   return amount < 0n &&
     /^(pagamento (de |da )?fatura|pagamento de cartao)(\b|$)/.test(normalized)

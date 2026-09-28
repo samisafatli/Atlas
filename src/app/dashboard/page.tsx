@@ -134,8 +134,8 @@ export default async function DashboardPage({
         />
         <p className="mt-4 text-sm text-[var(--muted)]">
           Cobranças/despesas: {formatCents(grossExpenses)} · Créditos/estornos:{" "}
-          {formatCents(refunds)}. Pagamentos de fatura e transferências ficam
-          fora do resultado.
+          {formatCents(refunds)}. Pagamentos de fatura, transferências e
+          movimentos de investimento ficam fora do resultado.
         </p>
         {transactions.some((item) => item.sourceType === "CREDIT_CARD") ? (
           <p className="mt-3 rounded-xl bg-amber-50 p-4 text-sm">

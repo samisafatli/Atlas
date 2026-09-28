@@ -6,16 +6,35 @@ import { useEffect, useState } from "react";
 import { countImportDuplicates } from "./duplicate-count";
 import { ImportSummary } from "./summary";
 import { sourceLabels } from "@/lib/nubank-csv";
+import { useFormStatus } from "react-dom";
+
+function ImportButton({ count }: { count: number | null }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white disabled:opacity-50"
+      disabled={pending || count === null}
+      type="submit"
+    >
+      {pending
+        ? "Importando arquivos…"
+        : `Importar ${count ?? ""} transações novas`}
+    </button>
+  );
+}
 
 export function SaveImportForm({
   accounts,
 }: {
   accounts: { id: string; name: string }[];
 }) {
-  const [preview, setPreview] = useState<{
-    filename: string;
-    transactions: ImportedTransaction[];
-  } | null>(null);
+  const [preview, setPreview] = useState<
+    | {
+        filename: string;
+        transactions: ImportedTransaction[];
+      }[]
+    | null
+  >(null);
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [error, setError] = useState("");
   const [counts, setCounts] = useState<{
@@ -27,18 +46,21 @@ export function SaveImportForm({
     const timer = window.setTimeout(() => {
       try {
         const saved = sessionStorage.getItem("atlas-import-preview");
-        if (
-          saved &&
-          ["CREDIT_CARD", "BANK_STATEMENT"].includes(
-            JSON.parse(saved)?.transactions?.[0]?.sourceType,
+        if (saved) {
+          const value = JSON.parse(saved);
+          const files = Array.isArray(value.files) ? value.files : [value];
+          if (
+            files.length &&
+            files.every(
+              (file: { transactions?: ImportedTransaction[] }) =>
+                file.transactions?.length &&
+                ["CREDIT_CARD", "BANK_STATEMENT"].includes(
+                  file.transactions[0].sourceType,
+                ),
+            )
           )
-        )
-          setPreview(
-            JSON.parse(saved) as {
-              filename: string;
-              transactions: ImportedTransaction[];
-            },
-          );
+            setPreview(files);
+        }
       } catch {
         setPreview(null);
       }
@@ -49,7 +71,10 @@ export function SaveImportForm({
     if (!preview || !accountId) return;
     let active = true;
     const timer = window.setTimeout(() => {
-      void countImportDuplicates(preview.transactions, accountId).then(
+      void countImportDuplicates(
+        preview.flatMap((file) => file.transactions),
+        accountId,
+      ).then(
         (result) => {
           if (active) setCounts(result);
         },
@@ -83,20 +108,21 @@ export function SaveImportForm({
       action={saveNubankImport}
       className="grid gap-5 rounded-2xl border border-[var(--line)] bg-white/80 p-5"
     >
-      <input type="hidden" name="filename" value={preview.filename} />
-      <input
-        type="hidden"
-        name="transactions"
-        value={JSON.stringify(preview.transactions)}
-      />
+      <input type="hidden" name="files" value={JSON.stringify(preview)} />
       <p className="text-sm">
-        {preview.transactions.length} transações prontas para importar do
-        arquivo <strong>{preview.filename}</strong>.
+        {preview.length} arquivos para importar na conta selecionada. Se forem
+        de contas diferentes, importe em lotes separados.
       </p>
-      <p className="font-medium">
-        {sourceLabels[preview.transactions[0].sourceType]}
-      </p>
-      <ImportSummary transactions={preview.transactions} />
+      {preview.map((file, index) => (
+        <div key={index} className="rounded-lg border border-[var(--line)] p-3">
+          <p className="font-medium">{file.filename}</p>
+          <p className="text-sm">
+            {sourceLabels[file.transactions[0].sourceType]} ·{" "}
+            {file.transactions.length} lançamentos
+          </p>
+          <ImportSummary transactions={file.transactions} />
+        </div>
+      ))}
       {error ? <p role="alert">{error}</p> : null}
       <label className="grid gap-2 text-sm font-medium">
         Conta de destino
@@ -121,7 +147,7 @@ export function SaveImportForm({
         <div className="grid gap-3">
           <p className="rounded-lg bg-[#f7f8f5] p-3 text-sm" role="status">
             {counts.newCount} novas transações; {counts.existing} já existentes
-            ou repetidas neste arquivo.
+            ou repetidas entre os arquivos selecionados.
           </p>
           {counts.suggestions.length ? (
             <div className="rounded-lg border border-[var(--line)] p-3">
@@ -149,13 +175,7 @@ export function SaveImportForm({
           Verificando transações existentes…
         </p>
       )}
-      <button
-        className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white disabled:opacity-50"
-        disabled={!counts}
-        type="submit"
-      >
-        Importar {counts ? counts.newCount : ""} transações novas
-      </button>
+      <ImportButton count={counts?.newCount ?? null} />
     </form>
   );
 }

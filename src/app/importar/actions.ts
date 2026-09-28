@@ -14,42 +14,63 @@ type PreviewRow = ImportedTransaction;
 export async function saveNubankImport(formData: FormData) {
   const filename = String(formData.get("filename") ?? "").trim();
   const accountId = String(formData.get("accountId") ?? "");
-  let rows: PreviewRow[];
+  let files: { filename: string; transactions: PreviewRow[] }[];
   try {
-    const parsed: unknown = JSON.parse(
-      String(formData.get("transactions") ?? ""),
-    );
-    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.length > 50000)
+    const parsed = formData.has("files")
+      ? JSON.parse(String(formData.get("files")))
+      : [
+          {
+            filename,
+            transactions: JSON.parse(
+              String(formData.get("transactions") ?? ""),
+            ),
+          },
+        ];
+    if (
+      !Array.isArray(parsed) ||
+      !parsed.length ||
+      parsed.length > 50 ||
+      parsed.some(
+        (file) =>
+          !file ||
+          typeof file.filename !== "string" ||
+          !file.filename.trim() ||
+          file.filename.length > 300 ||
+          !Array.isArray(file.transactions) ||
+          !file.transactions.length,
+      ) ||
+      parsed.reduce((sum, file) => sum + file.transactions.length, 0) > 50000
+    )
       redirect("/importar?erro=arquivo");
-    rows = parsed as PreviewRow[];
+    files = parsed;
   } catch {
     redirect("/importar?erro=arquivo");
   }
   const account = await prisma.account.findUnique({ where: { id: accountId } });
   if (
-    !filename ||
-    filename.length > 300 ||
     !account ||
-    rows.some((row) => {
-      if (!row || typeof row !== "object") return true;
-      const date = new Date(`${row.date}T12:00:00Z`);
-      return (
-        !/^\d{4}-\d{2}-\d{2}$/.test(row.date) ||
-        !Number.isFinite(date.getTime()) ||
-        date.toISOString().slice(0, 10) !== row.date ||
-        typeof row.description !== "string" ||
-        !row.description.trim() ||
-        row.description.length > 300 ||
-        !/^[1-9]\d{0,13}$/.test(row.amountCents) ||
-        !transactionTypes.includes(row.type) ||
-        !["BANK_STATEMENT", "CREDIT_CARD"].includes(row.sourceType) ||
-        row.sourceType !== rows[0].sourceType ||
-        (row.externalId !== null &&
-          (typeof row.externalId !== "string" ||
-            row.externalId.length > 200)) ||
-        (row.sourceType === "CREDIT_CARD" && row.type === "INCOME")
-      );
-    })
+    files.some(({ transactions: rows }) =>
+      rows.some((row) => {
+        if (!row || typeof row !== "object") return true;
+        const date = new Date(`${row.date}T12:00:00Z`);
+        return (
+          !/^\d{4}-\d{2}-\d{2}$/.test(row.date) ||
+          !Number.isFinite(date.getTime()) ||
+          date.toISOString().slice(0, 10) !== row.date ||
+          typeof row.description !== "string" ||
+          !row.description.trim() ||
+          row.description.length > 300 ||
+          !/^[1-9]\d{0,13}$/.test(row.amountCents) ||
+          !transactionTypes.includes(row.type) ||
+          !["BANK_STATEMENT", "CREDIT_CARD"].includes(row.sourceType) ||
+          row.sourceType !== rows[0].sourceType ||
+          (row.externalId !== null &&
+            (typeof row.externalId !== "string" ||
+              row.externalId.length > 200)) ||
+          (row.sourceType === "CREDIT_CARD" && row.type === "INCOME")
+        );
+      }),
+    )
   )
     redirect("/importar?erro=arquivo");
   const legacyImport = await prisma.import.findFirst({
@@ -67,55 +88,59 @@ export async function saveNubankImport(formData: FormData) {
       }),
     );
     await prisma.$transaction(async (tx) => {
-      const candidates = rows.map((row) => ({
-        row,
-        fingerprint: transactionFingerprint({ ...row, accountId }),
-      }));
+      const rows = files.flatMap((file) => file.transactions);
       const fingerprints = await existingImportFingerprints(
         tx,
         rows.map((row) => ({ ...row, accountId })),
       );
       const seen = new Set(fingerprints);
-      const toCreate = candidates.flatMap(({ row, fingerprint }) => {
-        if (seen.has(fingerprint)) {
-          skipped += 1;
-          return [];
-        }
-        seen.add(fingerprint);
-        const matchedCategory = matchCategoryRule(
-          row.description,
-          categoryType(row.type) ?? "TRANSFER",
-          rules,
-        );
-        return [
-          {
-            description: row.description.trim().slice(0, 300),
-            amountCents: BigInt(row.amountCents),
-            type: row.type,
-            occurredAt: new Date(`${row.date}T12:00:00.000Z`),
-            accountId,
-            fingerprint,
-            sourceType: row.sourceType,
-            externalId: row.externalId,
-            categoryId: matchedCategory?.category.id ?? null,
+      for (const file of files) {
+        const toCreate = file.transactions
+          .map((row) => ({
+            row,
+            fingerprint: transactionFingerprint({ ...row, accountId }),
+          }))
+          .flatMap(({ row, fingerprint }) => {
+            if (seen.has(fingerprint)) {
+              skipped += 1;
+              return [];
+            }
+            seen.add(fingerprint);
+            const matchedCategory = matchCategoryRule(
+              row.description,
+              categoryType(row.type) ?? "TRANSFER",
+              rules,
+            );
+            return [
+              {
+                description: row.description.trim().slice(0, 300),
+                amountCents: BigInt(row.amountCents),
+                type: row.type,
+                occurredAt: new Date(`${row.date}T12:00:00.000Z`),
+                accountId,
+                fingerprint,
+                sourceType: row.sourceType,
+                externalId: row.externalId,
+                categoryId: matchedCategory?.category.id ?? null,
+              },
+            ];
+          });
+        const record = await tx.import.create({
+          data: {
+            filename: file.filename,
+            transactionCount: toCreate.length,
+            sourceType: file.transactions[0].sourceType,
+            parserVersion: 2,
           },
-        ];
-      });
-      const record = await tx.import.create({
-        data: {
-          filename,
-          transactionCount: toCreate.length,
-          sourceType: rows[0].sourceType,
-          parserVersion: 2,
-        },
-      });
-      for (let index = 0; index < toCreate.length; index += 100) {
-        const batch = toCreate.slice(index, index + 100);
-        await tx.transaction.createMany({
-          data: batch.map((row) => ({ ...row, importId: record.id })),
         });
+        for (let index = 0; index < toCreate.length; index += 100) {
+          const batch = toCreate.slice(index, index + 100);
+          await tx.transaction.createMany({
+            data: batch.map((row) => ({ ...row, importId: record.id })),
+          });
+        }
+        inserted += toCreate.length;
       }
-      inserted = toCreate.length;
     });
   } catch {
     redirect("/importar?erro=salvar");

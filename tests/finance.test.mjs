@@ -811,6 +811,144 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
     },
   );
+  await t.test(
+    "multi-file import deduplicates across sources and rejects the entire invalid batch",
+    async () => {
+      const batchAccount = await prisma.account.create({
+        data: { name: "Batch test", type: "CHECKING" },
+      });
+      const card = parseNubankCsv(
+        "date,title,amount\n2026-05-01,Compra lote,10.00",
+      );
+      const bank = parseNubankCsv(
+        "Data,Valor,Identificador,Descrição\n01/05/2026,20.00,batch-id,Receita lote",
+      );
+      const files = [
+        { filename: "card.csv", transactions: card },
+        { filename: "bank.ofx", transactions: bank },
+        { filename: "overlap.csv", transactions: [...bank, ...bank] },
+      ];
+      const fields = {
+        accountId: batchAccount.id,
+        files: JSON.stringify(files),
+      };
+      const beforeImports = await prisma.import.count();
+      await redirected(
+        () =>
+          saveNubankImport(
+            form({
+              ...fields,
+              files: JSON.stringify([
+                ...files,
+                {
+                  filename: "invalid.csv",
+                  transactions: [{ ...card[0], date: "invalid" }],
+                },
+              ]),
+            }),
+          ),
+        "erro=arquivo",
+      );
+      assert.equal(await prisma.import.count(), beforeImports);
+      assert.equal(
+        await prisma.transaction.count({
+          where: { accountId: batchAccount.id },
+        }),
+        0,
+      );
+      const counts = await countImportDuplicates(
+        files.flatMap((file) => file.transactions),
+        batchAccount.id,
+      );
+      assert.equal(counts.newCount, 2);
+      assert.equal(counts.existing, 2);
+      await redirected(
+        () => saveNubankImport(form(fields)),
+        "quantidade=2&duplicadas=2",
+      );
+      assert.equal(await prisma.import.count(), beforeImports + 3);
+      const saved = await prisma.transaction.findMany({
+        where: { accountId: batchAccount.id },
+        include: { importedIn: true },
+      });
+      assert.deepEqual(saved.map((row) => row.importedIn.filename).sort(), [
+        "bank.ofx",
+        "card.csv",
+      ]);
+      await redirected(
+        () => saveNubankImport(form(fields)),
+        "quantidade=0&duplicadas=4",
+      );
+      assert.equal(
+        await prisma.transaction.count({
+          where: { accountId: batchAccount.id },
+        }),
+        2,
+      );
+    },
+  );
+  await t.test(
+    "RDB movements do not affect results and historical repair is backed up and idempotent",
+    async () => {
+      const { repairRdb } = await import("../src/lib/repair-rdb.ts");
+      const { transactionFingerprint } =
+        await import("../src/lib/transaction-fingerprint.ts");
+      const rows = parseNubankCsv(
+        "Data,Valor,Descrição\n01/09/2026,-100.00,Aplicação RDB\n02/09/2026,105.00,Resgate RDB",
+      );
+      assert.deepEqual(
+        rows.map((r) => r.type),
+        ["INVESTMENT_DEPOSIT", "INVESTMENT_WITHDRAWAL"],
+      );
+      for (const row of rows) {
+        assert.equal(resultAmount(row.type, BigInt(row.amountCents)), 0n);
+        assert.equal(expenseAmount(row.type, BigInt(row.amountCents)), 0n);
+      }
+      const a = await prisma.account.create({
+        data: { name: "RDB test", type: "CHECKING" },
+      });
+      for (const row of rows) {
+        const type = row.type === "INVESTMENT_DEPOSIT" ? "EXPENSE" : "INCOME";
+        await prisma.transaction.create({
+          data: {
+            description: row.description,
+            amountCents: BigInt(row.amountCents),
+            type,
+            occurredAt: new Date(`${row.date}T12:00:00Z`),
+            sourceType: row.sourceType,
+            accountId: a.id,
+            fingerprint: transactionFingerprint({
+              ...row,
+              type,
+              accountId: a.id,
+            }),
+          },
+        });
+      }
+      const result = await repairRdb();
+      assert.equal(result.changed, 2);
+      assert.ok(
+        backup.parseBackup(
+          await readFile(join(directory, result.protectionFile), "utf8"),
+        ),
+      );
+      assert.equal((await repairRdb()).changed, 0);
+      assert.equal((await countImportDuplicates(rows, a.id)).existing, 2);
+      const contents = backup.backupJson(await backup.createBackupObject());
+      const parsed = backup.parseBackup(contents);
+      assert.ok(parsed);
+      await backup.restoreBackup(parsed);
+      assert.equal(
+        await prisma.transaction.count({
+          where: {
+            accountId: a.id,
+            type: { in: ["INVESTMENT_DEPOSIT", "INVESTMENT_WITHDRAWAL"] },
+          },
+        }),
+        2,
+      );
+    },
+  );
   console.info(
     `Isolated test database: ${pathToFileURL(join(directory, "finance.db")).href}`,
   );

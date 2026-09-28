@@ -11,6 +11,21 @@ não inclui saldo inicial, contas patrimoniais nem movimentações ausentes.
 
 ## Fatura e extrato da conta
 
+Aplicação RDB e Resgate RDB são movimentos de investimento separados, fora de
+receitas e despesas, tanto em CSV quanto em OFX. O resgate inteiro não é tratado
+como rendimento. Esses movimentos não identificam a caixinha ou seu titular e
+não atualizam os snapshots de patrimônio; informe os saldos manualmente.
+Para corrigir lançamentos antigos do extrato, execute `node scripts/repair-rdb.mjs`:
+o procedimento cria um backup JSON antes de reclassificar, mantém os valores e
+identificadores e pode ser repetido sem duplicar ou alterar novamente os dados.
+
+A tela **Importar arquivos** aceita seleção ou arraste de vários CSVs/OFXs
+ao mesmo tempo (até 50 arquivos, 20 MB no total e 50.000 lançamentos).
+Revise o resumo por arquivo e escolha uma conta de destino para todo o lote.
+Arquivos de contas diferentes devem ser importados em lotes separados.
+A deduplicação considera o banco e os demais arquivos selecionados. Cada
+arquivo mantém seu registro no histórico; qualquer falha cancela o lote inteiro.
+
 - **OFX da conta:** envie o `.ofx` em **Importar arquivos**, no mesmo fluxo do
   CSV. Aceita um extrato bancário em BRL por arquivo, com campos XML ou SGML.
   Mantém a data bancária e usa `FITID` para evitar reimportações na mesma conta.

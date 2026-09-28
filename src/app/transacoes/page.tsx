@@ -158,7 +158,14 @@ export default async function TransactionsPage({
   const requestedImportId = firstValue(params.importId) ?? "";
   const type =
     requestedType &&
-    ["INCOME", "EXPENSE", "REFUND", "TRANSFER"].includes(requestedType)
+    [
+      "INCOME",
+      "EXPENSE",
+      "REFUND",
+      "TRANSFER",
+      "INVESTMENT_DEPOSIT",
+      "INVESTMENT_WITHDRAWAL",
+    ].includes(requestedType)
       ? requestedType
       : "";
   const categories = await prisma.category.findMany({
@@ -319,6 +326,8 @@ export default async function TransactionsPage({
                 <option value="">Todos</option>
                 <option value="INCOME">Receitas</option>
                 <option value="EXPENSE">Despesas</option>
+                <option value="INVESTMENT_DEPOSIT">Aplicações</option>
+                <option value="INVESTMENT_WITHDRAWAL">Resgates</option>
                 <option value="REFUND">Créditos / estornos</option>
                 <option value="TRANSFER">Transferências / pagamentos</option>
               </select>

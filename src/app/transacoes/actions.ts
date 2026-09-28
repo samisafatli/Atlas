@@ -26,8 +26,15 @@ function readTransaction(formData: FormData, categoryRequired = false) {
     amountCents <= 0n ||
     !Number.isFinite(occurredAt.getTime()) ||
     occurredAt.toISOString().slice(0, 10) !== date ||
-    !["INCOME", "EXPENSE", "REFUND", "TRANSFER"].includes(type) ||
-    (categoryRequired && type !== "TRANSFER" && !categoryId) ||
+    ![
+      "INCOME",
+      "EXPENSE",
+      "REFUND",
+      "TRANSFER",
+      "INVESTMENT_DEPOSIT",
+      "INVESTMENT_WITHDRAWAL",
+    ].includes(type) ||
+    (categoryRequired && categoryType(type) !== null && !categoryId) ||
     !accountId
   )
     return null;
@@ -36,7 +43,7 @@ function readTransaction(formData: FormData, categoryRequired = false) {
     occurredAt,
     amountCents,
     type,
-    categoryId: type === "TRANSFER" ? null : categoryId || null,
+    categoryId: categoryType(type) === null ? null : categoryId || null,
     accountId,
   };
 }

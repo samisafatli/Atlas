@@ -112,6 +112,8 @@ export function TransactionForm({
         >
           <option value="EXPENSE">Despesa</option>
           <option value="INCOME">Receita</option>
+          <option value="INVESTMENT_DEPOSIT">Aplicação de investimento</option>
+          <option value="INVESTMENT_WITHDRAWAL">Resgate de investimento</option>
           <option value="REFUND">Crédito / estorno (reduz despesa)</option>
           <option value="TRANSFER">
             Transferência / pagamento de fatura (fora do resultado)
@@ -122,12 +124,12 @@ export function TransactionForm({
         Categoria
         <select
           name="categoryId"
-          required={requireCategory && type !== "TRANSFER"}
+          required={requireCategory && categoryType(type) !== null}
           value={categoryId}
           onChange={(event) => setCategoryId(event.target.value)}
           className="min-h-11 rounded-lg border border-[var(--line)] px-3 font-normal"
         >
-          {!requireCategory || type === "TRANSFER" ? (
+          {!requireCategory || categoryType(type) === null ? (
             <option value="">Sem categoria</option>
           ) : null}
           {categories

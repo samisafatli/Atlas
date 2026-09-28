@@ -24,6 +24,14 @@ export function ImportSummary({
         Transferências/pagamentos: {formatCents(sum("TRANSFER"))} (fora do
         resultado).
       </p>
+      {transactions[0]?.sourceType !== "CREDIT_CARD" ? (
+        <p>
+          Aplicações: {formatCents(sum("INVESTMENT_DEPOSIT"))} · Resgates:{" "}
+          {formatCents(sum("INVESTMENT_WITHDRAWAL"))} (fora do resultado). Esses
+          movimentos não identificam a caixinha nem seu titular e não atualizam
+          o patrimônio automaticamente.
+        </p>
+      ) : null}
       {transactions[0]?.sourceType === "CREDIT_CARD" ? (
         <p>
           Esta fatura não mostra seu salário, Pix ou compras no débito. Importe

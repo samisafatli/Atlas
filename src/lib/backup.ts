@@ -348,9 +348,14 @@ export function parseBackup(contents: string): BackupDocument | null {
         !row.description.trim() ||
         !isIntString(row.amountCents) ||
         BigInt(row.amountCents) <= 0n ||
-        !["INCOME", "EXPENSE", "REFUND", "TRANSFER"].includes(
-          String(row.type),
-        ) ||
+        ![
+          "INCOME",
+          "EXPENSE",
+          "REFUND",
+          "TRANSFER",
+          "INVESTMENT_DEPOSIT",
+          "INVESTMENT_WITHDRAWAL",
+        ].includes(String(row.type)) ||
         !isDate(row.occurredAt) ||
         !accountIds.has(String(row.accountId)) ||
         (row.categoryId !== null &&
