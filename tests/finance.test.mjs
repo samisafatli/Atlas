@@ -1435,6 +1435,24 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
     },
   );
+  await t.test(
+    "type labels and validation cover every transaction type",
+    async () => {
+      const {
+        transactionTypes,
+        typeFilterLabels,
+        typeFormLabels,
+        isTransactionType,
+      } = await import("../src/lib/transaction-types.ts");
+      for (const labels of [typeFilterLabels, typeFormLabels])
+        assert.deepEqual(
+          Object.keys(labels).sort(),
+          [...transactionTypes].sort(),
+        );
+      assert.ok(transactionTypes.every(isTransactionType));
+      assert.equal(isTransactionType("SALARY"), false);
+    },
+  );
   await t.test("month coverage reports imported sources and days", async () => {
     const { monthCoverage } = await import("../src/lib/import-coverage.ts");
     const row = (date, sourceType) => ({

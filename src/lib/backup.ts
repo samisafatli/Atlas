@@ -2,7 +2,7 @@ import "server-only";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { prisma } from "@/lib/prisma";
-import { categoryType } from "./transaction-types";
+import { categoryType, isTransactionType } from "./transaction-types";
 import { accountSeed, categorySeeds } from "./default-data";
 import { randomUUID } from "node:crypto";
 
@@ -353,17 +353,7 @@ export function parseBackup(contents: string): BackupDocument | null {
         !row.description.trim() ||
         !isIntString(row.amountCents) ||
         BigInt(row.amountCents) <= 0n ||
-        ![
-          "INCOME",
-          "EXPENSE",
-          "REFUND",
-          "TRANSFER",
-          "INVESTMENT_DEPOSIT",
-          "INVESTMENT_WITHDRAWAL",
-          "MOTHER_INCOME",
-          "MOTHER_EXPENSE",
-          "MOTHER_ESTIMATED_EXPENSE",
-        ].includes(String(row.type)) ||
+        !isTransactionType(String(row.type)) ||
         !isDate(row.occurredAt) ||
         !accountIds.has(String(row.accountId)) ||
         (row.categoryId !== null &&

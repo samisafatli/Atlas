@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createTransaction, updateTransaction } from "./actions";
-import { categoryType } from "@/lib/transaction-types";
+import { categoryType, typeFormLabels } from "@/lib/transaction-types";
 
 type Props = {
   categories: { id: string; name: string; type: string }[];
@@ -118,19 +118,11 @@ export function TransactionForm({
           }}
           className="min-h-11 rounded-lg border border-[var(--line)] px-3 font-normal"
         >
-          <option value="EXPENSE">Despesa</option>
-          <option value="INCOME">Receita</option>
-          <option value="INVESTMENT_DEPOSIT">Aplicação de investimento</option>
-          <option value="INVESTMENT_WITHDRAWAL">Resgate de investimento</option>
-          <option value="MOTHER_INCOME">Mãe — entrada</option>
-          <option value="MOTHER_EXPENSE">Mãe — pagamento</option>
-          <option value="MOTHER_ESTIMATED_EXPENSE">
-            Mãe — pagamento estimado
-          </option>
-          <option value="REFUND">Crédito / estorno (reduz despesa)</option>
-          <option value="TRANSFER">
-            Transferência / pagamento de fatura (fora do resultado)
-          </option>
+          {Object.entries(typeFormLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </label>
       {categoryType(type) === null ? (

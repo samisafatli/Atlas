@@ -10,6 +10,32 @@ export const transactionTypes = [
   "INVESTMENT_WITHDRAWAL",
 ] as const;
 export type TransactionType = (typeof transactionTypes)[number];
+export function isTransactionType(value: string): value is TransactionType {
+  return (transactionTypes as readonly string[]).includes(value);
+}
+// Option order follows each record; the type makes every record complete.
+export const typeFilterLabels: Record<TransactionType, string> = {
+  INCOME: "Receitas",
+  EXPENSE: "Despesas",
+  INVESTMENT_DEPOSIT: "Aplicações",
+  INVESTMENT_WITHDRAWAL: "Resgates",
+  MOTHER_INCOME: "Mãe — entrada",
+  MOTHER_EXPENSE: "Mãe — pagamento",
+  MOTHER_ESTIMATED_EXPENSE: "Mãe — pagamento estimado",
+  REFUND: "Créditos / estornos",
+  TRANSFER: "Transferências / pagamentos",
+};
+export const typeFormLabels: Record<TransactionType, string> = {
+  EXPENSE: "Despesa",
+  INCOME: "Receita",
+  INVESTMENT_DEPOSIT: "Aplicação de investimento",
+  INVESTMENT_WITHDRAWAL: "Resgate de investimento",
+  MOTHER_INCOME: "Mãe — entrada",
+  MOTHER_EXPENSE: "Mãe — pagamento",
+  MOTHER_ESTIMATED_EXPENSE: "Mãe — pagamento estimado",
+  REFUND: "Crédito / estorno (reduz despesa)",
+  TRANSFER: "Transferência / pagamento de fatura (fora do resultado)",
+};
 export const typeLabels: Record<string, string> = {
   MOTHER_INCOME: "Mãe — entrada",
   MOTHER_EXPENSE: "Mãe — pagamento",

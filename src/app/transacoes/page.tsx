@@ -1,16 +1,15 @@
 import Link from "next/link";
-import { PeriodFilter } from "./period-filter";
 import { prisma } from "@/lib/prisma";
-import { ConfirmDelete } from "./confirm-delete";
-import { CategorySelect } from "./category-select";
+import { getMonthRange } from "@/lib/finance-format";
 import {
   categoryType,
+  isTransactionType,
   transactionTypes,
-  typeLabels,
-  transactionSign,
 } from "@/lib/transaction-types";
-import { updateTransactionCategory } from "./actions";
 import { PageShell } from "@/app/page-shell";
+import { TransactionFilters } from "./transaction-filters";
+import { TransactionTable } from "./transaction-table";
+import { Pagination } from "./pagination";
 
 export const metadata = {
   description: "Consulte as transações registradas no Atlas.",
@@ -39,57 +38,9 @@ function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function getMonthRange(value: string | undefined) {
-  const match = value?.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
-
-  if (!match) {
-    return undefined;
-  }
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-
-  if (year < 1900 || year > 9999) {
-    return undefined;
-  }
-
-  return {
-    gte: new Date(Date.UTC(year, month - 1, 1)),
-    lt: new Date(Date.UTC(year, month, 1)),
-  };
-}
-
-function formatCurrencyFromCents(amountCents: bigint, currency: string) {
-  const isNegative = amountCents < 0n;
-  const absoluteCents = isNegative ? -amountCents : amountCents;
-  const wholeUnits = absoluteCents / 100n;
-  const cents = (absoluteCents % 100n).toString().padStart(2, "0");
-  const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-  const parts = currencyFormatter.formatToParts(wholeUnits);
-  const lastNumberPart = parts.reduce(
-    (lastIndex, part, index) =>
-      part.type === "integer" || part.type === "group" ? index : lastIndex,
-    -1,
-  );
-  const decimalSeparator = new Intl.NumberFormat("pt-BR")
-    .formatToParts(1.1)
-    .find((part) => part.type === "decimal")?.value;
-
-  if (lastNumberPart >= 0) {
-    parts.splice(
-      lastNumberPart + 1,
-      0,
-      { type: "decimal", value: decimalSeparator ?? "," },
-      { type: "fraction", value: cents },
-    );
-  }
-
-  return (isNegative ? "−" : "") + parts.map((part) => part.value).join("");
+function monthFilterRange(value: string) {
+  const range = getMonthRange(value);
+  return range ? { gte: range.start, lt: range.end } : undefined;
 }
 
 export default async function TransactionsPage({
@@ -107,7 +58,7 @@ export default async function TransactionsPage({
     requestedYear && /^(19\d{2}|[2-9]\d{3})$/.test(requestedYear)
       ? requestedYear
       : "";
-  const legacyMonthRange = getMonthRange(requestedMonth);
+  const legacyMonthRange = monthFilterRange(requestedMonth);
   const year =
     requestedYear === undefined
       ? legacyMonthRange
@@ -118,7 +69,7 @@ export default async function TransactionsPage({
     year && legacyMonthRange && requestedMonth.startsWith(`${year}-`)
       ? requestedMonth
       : "";
-  const monthRange = getMonthRange(month);
+  const monthRange = monthFilterRange(month);
   const yearRange = year
     ? {
         gte: new Date(`${year}-01-01T00:00:00Z`),
@@ -158,26 +109,14 @@ export default async function TransactionsPage({
   const requestedCategory = firstValue(params.category);
   const requestedImportId = firstValue(params.importId) ?? "";
   const type =
-    requestedType &&
-    [
-      "INCOME",
-      "EXPENSE",
-      "REFUND",
-      "TRANSFER",
-      "INVESTMENT_DEPOSIT",
-      "INVESTMENT_WITHDRAWAL",
-      "MOTHER_INCOME",
-      "MOTHER_EXPENSE",
-      "MOTHER_ESTIMATED_EXPENSE",
-    ].includes(requestedType)
-      ? requestedType
-      : "";
+    requestedType && isTransactionType(requestedType) ? requestedType : "";
   const categories = await prisma.category.findMany({
     orderBy: [{ type: "asc" }, { name: "asc" }],
   });
   const categoryId =
-    requestedCategory === "uncategorized" ||
-    categories.some((category) => category.id === requestedCategory)
+    requestedCategory &&
+    (requestedCategory === "uncategorized" ||
+      categories.some((category) => category.id === requestedCategory))
       ? requestedCategory
       : "";
   const validImport = requestedImportId
@@ -307,76 +246,16 @@ export default async function TransactionsPage({
           </p>
         ) : null}
 
-        <form
-          action="/transacoes"
-          className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1fr_1fr_1.2fr_auto_auto] lg:items-end"
-          method="get"
-        >
-          {importId ? (
-            <input type="hidden" name="importId" value={importId} />
-          ) : null}
-          <PeriodFilter
-            key={`${year}-${month}-${day}`}
-            year={year}
-            month={month}
-            day={day}
-            years={years}
-          />
-
-          <label className="grid gap-2 text-sm font-medium" htmlFor="type">
-            Tipo
-            <select
-              className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
-              id="type"
-              name="type"
-              defaultValue={type}
-            >
-              <option value="">Todos</option>
-              <option value="INCOME">Receitas</option>
-              <option value="EXPENSE">Despesas</option>
-              <option value="INVESTMENT_DEPOSIT">Aplicações</option>
-              <option value="INVESTMENT_WITHDRAWAL">Resgates</option>
-              <option value="MOTHER_INCOME">Mãe — entrada</option>
-              <option value="MOTHER_EXPENSE">Mãe — pagamento</option>
-              <option value="MOTHER_ESTIMATED_EXPENSE">
-                Mãe — pagamento estimado
-              </option>
-              <option value="REFUND">Créditos / estornos</option>
-              <option value="TRANSFER">Transferências / pagamentos</option>
-            </select>
-          </label>
-
-          <label className="grid gap-2 text-sm font-medium" htmlFor="category">
-            Categoria
-            <select
-              className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
-              id="category"
-              name="category"
-              defaultValue={categoryId}
-            >
-              <option value="">Todas</option>
-              <option value="uncategorized">Sem categoria</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <button
-            className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
-            type="submit"
-          >
-            Filtrar
-          </button>
-          <Link
-            className="inline-flex min-h-11 items-center justify-center px-2 text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]"
-            href="/transacoes"
-          >
-            Limpar
-          </Link>
-        </form>
+        <TransactionFilters
+          importId={importId}
+          year={year}
+          month={month}
+          day={day}
+          years={years}
+          type={type}
+          categoryId={categoryId}
+          categories={categories}
+        />
 
         <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80">
           <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4 sm:px-6">
@@ -391,204 +270,20 @@ export default async function TransactionsPage({
                 : ""}
             </span>
           </div>
-          {transactions.length === 0 ? (
-            <div className="px-6 py-16 text-center">
-              <div
-                aria-hidden="true"
-                className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-[#e9f0eb] text-xl text-[var(--accent)]"
-              >
-                {hasFilters ? "⌕" : "—"}
-              </div>
-              <h3 className="font-medium">
-                {hasFilters
-                  ? "Nenhuma transação encontrada"
-                  : "Ainda não há transações"}
-              </h3>
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[var(--muted)]">
-                {hasFilters
-                  ? "Tente mudar ou limpar os filtros para ver outros resultados."
-                  : "Quando houver transações registradas, elas aparecerão aqui."}
-              </p>
-              {hasFilters ? (
-                <Link
-                  className="mt-5 inline-flex text-sm font-medium text-[var(--accent)] hover:underline"
-                  href="/transacoes"
-                >
-                  Limpar filtros
-                </Link>
-              ) : null}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead className="bg-[#f7f8f5] text-xs tracking-wide text-[var(--muted)] uppercase">
-                  <tr>
-                    <th className="px-6 py-3 font-medium" scope="col">
-                      Data
-                    </th>
-                    <th className="px-6 py-3 font-medium" scope="col">
-                      Descrição
-                    </th>
-                    <th className="px-6 py-3 font-medium" scope="col">
-                      Categoria
-                    </th>
-                    <th className="px-6 py-3 font-medium" scope="col">
-                      Conta
-                    </th>
-                    <th
-                      className="px-6 py-3 text-right font-medium"
-                      scope="col"
-                    >
-                      Valor
-                    </th>
-                    <th
-                      className="px-6 py-3 text-right font-medium"
-                      scope="col"
-                    >
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--line)]">
-                  {transactions.map((transaction) => {
-                    const isIncome = transaction.type === "INCOME";
-                    const isExpense = transaction.type === "EXPENSE";
-                    const tone = isIncome
-                      ? "text-emerald-700"
-                      : isExpense
-                        ? "text-rose-700"
-                        : "text-[var(--foreground)]";
-                    const typeLabel =
-                      typeLabels[transaction.type] ?? transaction.type;
-                    const amountSign = transactionSign(transaction.type);
-
-                    return (
-                      <tr key={transaction.id}>
-                        <td className="whitespace-nowrap px-6 py-4 text-[var(--muted)]">
-                          <time dateTime={transaction.occurredAt.toISOString()}>
-                            {new Intl.DateTimeFormat("pt-BR", {
-                              dateStyle: "medium",
-                              timeZone: "UTC",
-                            }).format(transaction.occurredAt)}
-                          </time>
-                        </td>
-                        <td className="px-6 py-4 font-medium">
-                          <span>{transaction.description}</span>
-                          <span
-                            className={"mt-1 block text-xs font-normal " + tone}
-                          >
-                            {typeLabel}
-                          </span>
-                          {transaction.ownershipEstimated ? (
-                            <span className="mt-1 block text-xs font-normal text-amber-800">
-                              Divisão estimada com sua mãe
-                            </span>
-                          ) : null}
-                        </td>
-                        <td className="px-6 py-4 text-[var(--muted)]">
-                          {categoryType(transaction.type) === null ? (
-                            <span>Não se aplica</span>
-                          ) : (
-                            <form
-                              action={updateTransactionCategory.bind(
-                                null,
-                                transaction.id,
-                              )}
-                            >
-                              <input
-                                type="hidden"
-                                name="returnTo"
-                                value={returnTo}
-                              />
-                              <CategorySelect
-                                key={transaction.categoryId ?? "uncategorized"}
-                                description={transaction.description}
-                                categoryId={transaction.categoryId}
-                                categories={categories.filter(
-                                  (category) =>
-                                    category.type ===
-                                    categoryType(transaction.type),
-                                )}
-                              />
-                            </form>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-[var(--muted)]">
-                          {transaction.account.name}
-                        </td>
-                        <td
-                          className={
-                            "whitespace-nowrap px-6 py-4 text-right font-semibold " +
-                            tone
-                          }
-                        >
-                          {amountSign}{" "}
-                          {formatCurrencyFromCents(
-                            transaction.amountCents,
-                            transaction.account.currency,
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-3">
-                            <Link
-                              className="text-sm text-[var(--accent)] hover:underline"
-                              href={`/transacoes/${transaction.id}/editar`}
-                            >
-                              Editar
-                            </Link>
-                            <ConfirmDelete
-                              id={transaction.id}
-                              description={transaction.description}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <TransactionTable
+            transactions={transactions}
+            categories={categories}
+            returnTo={returnTo}
+            hasFilters={hasFilters}
+          />
           {total > 0 ? (
-            <nav
-              aria-label="Paginação das transações"
-              className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-4"
-            >
-              {page > 1 ? (
-                <Link
-                  className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
-                  href={pageHref(page - 1)}
-                >
-                  ← Anterior
-                </Link>
-              ) : (
-                <span
-                  aria-disabled="true"
-                  className="px-4 text-sm text-[var(--muted)] opacity-50"
-                >
-                  ← Anterior
-                </span>
-              )}
-              <span className="text-sm text-[var(--muted)]">
-                Página {page} de {pageCount}
-              </span>
-              {page < pageCount ? (
-                <Link
-                  className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
-                  href={pageHref(page + 1)}
-                >
-                  Próxima →
-                </Link>
-              ) : (
-                <span
-                  aria-disabled="true"
-                  className="px-4 text-sm text-[var(--muted)] opacity-50"
-                >
-                  Próxima →
-                </span>
-              )}
-            </nav>
-          ) : null}{" "}
+            <Pagination
+              page={page}
+              pageCount={pageCount}
+              previousHref={pageHref(page - 1)}
+              nextHref={pageHref(page + 1)}
+            />
+          ) : null}
         </div>
       </section>
     </PageShell>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { categoryType } from "@/lib/transaction-types";
+import { categoryType, isTransactionType } from "@/lib/transaction-types";
 
 function readTransaction(formData: FormData, categoryRequired = false) {
   const description = String(formData.get("description") ?? "").trim();
@@ -26,17 +26,7 @@ function readTransaction(formData: FormData, categoryRequired = false) {
     amountCents <= 0n ||
     !Number.isFinite(occurredAt.getTime()) ||
     occurredAt.toISOString().slice(0, 10) !== date ||
-    ![
-      "INCOME",
-      "EXPENSE",
-      "REFUND",
-      "TRANSFER",
-      "INVESTMENT_DEPOSIT",
-      "INVESTMENT_WITHDRAWAL",
-      "MOTHER_INCOME",
-      "MOTHER_EXPENSE",
-      "MOTHER_ESTIMATED_EXPENSE",
-    ].includes(type) ||
+    !isTransactionType(type) ||
     (categoryRequired && categoryType(type) !== null && !categoryId) ||
     !accountId
   )
