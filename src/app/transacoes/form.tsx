@@ -114,6 +114,11 @@ export function TransactionForm({
           <option value="INCOME">Receita</option>
           <option value="INVESTMENT_DEPOSIT">Aplicação de investimento</option>
           <option value="INVESTMENT_WITHDRAWAL">Resgate de investimento</option>
+          <option value="MOTHER_INCOME">Mãe — entrada</option>
+          <option value="MOTHER_EXPENSE">Mãe — pagamento</option>
+          <option value="MOTHER_ESTIMATED_EXPENSE">
+            Mãe — pagamento estimado
+          </option>
           <option value="REFUND">Crédito / estorno (reduz despesa)</option>
           <option value="TRANSFER">
             Transferência / pagamento de fatura (fora do resultado)

@@ -1,5 +1,7 @@
 "use server";
 
+import { salaryCategory } from "@/lib/personal-rules";
+
 import { prisma } from "@/lib/prisma";
 import { transactionFingerprint } from "@/lib/transaction-fingerprint";
 import { existingImportFingerprints } from "@/lib/import-deduplication";
@@ -55,11 +57,16 @@ export async function countImportDuplicates(
         categoryType(transaction.type) ?? "TRANSFER",
         rules,
       );
-      return match
+      const salary = salaryCategory(
+        transaction.description,
+        transaction.type,
+        transaction.sourceType,
+      );
+      return salary || match
         ? [
             {
               description: transaction.description,
-              category: match.category.name,
+              category: salary ?? match!.category.name,
             },
           ]
         : [];

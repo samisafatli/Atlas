@@ -355,6 +355,9 @@ export function parseBackup(contents: string): BackupDocument | null {
           "TRANSFER",
           "INVESTMENT_DEPOSIT",
           "INVESTMENT_WITHDRAWAL",
+          "MOTHER_INCOME",
+          "MOTHER_EXPENSE",
+          "MOTHER_ESTIMATED_EXPENSE",
         ].includes(String(row.type)) ||
         !isDate(row.occurredAt) ||
         !accountIds.has(String(row.accountId)) ||

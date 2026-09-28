@@ -949,6 +949,172 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
     },
   );
+
+  await t.test(
+    "personal rules preserve bank identity and separate estimated ownership",
+    async () => {
+      const { bankTransactionType } = await import("../src/lib/nubank-csv.ts");
+      const { salaryCategory } = await import("../src/lib/personal-rules.ts");
+      const { repairPersonalHistory } =
+        await import("../src/lib/repair-personal-history.ts");
+      const { transactionFingerprint } =
+        await import("../src/lib/transaction-fingerprint.ts");
+      assert.equal(
+        bankTransactionType("Pix Mouna Hussen Safatli", 100n),
+        "MOTHER_INCOME",
+      );
+      assert.equal(
+        bankTransactionType("Pix Mouna Hussen Safatli", -100n),
+        "EXPENSE",
+      );
+      assert.equal(
+        bankTransactionType("BAP ADMINISTRACAO", -100n),
+        "MOTHER_EXPENSE",
+      );
+      assert.equal(bankTransactionType("Pbadministradora", -100n), "EXPENSE");
+      assert.equal(bankTransactionType("PREVENT SENIOR", 100n), "INCOME");
+      assert.equal(
+        salaryCategory(
+          "SAMI SAFATLI CAIXA ECONOMICA FEDERAL",
+          "INCOME",
+          "BANK_STATEMENT",
+        ),
+        "Salário repassado da Caixa",
+      );
+      assert.equal(
+        salaryCategory("SAMI SAFATLI CAIXA", "EXPENSE", "BANK_STATEMENT"),
+        null,
+      );
+      assert.equal(
+        salaryCategory("SAMI SAFATLI WISE", "INCOME", "BANK_STATEMENT"),
+        null,
+      );
+      assert.equal(
+        salaryCategory("NABIL SAFATLI", "INCOME", "BANK_STATEMENT"),
+        null,
+      );
+      for (const type of [
+        "MOTHER_INCOME",
+        "MOTHER_EXPENSE",
+        "MOTHER_ESTIMATED_EXPENSE",
+      ]) {
+        assert.equal(resultAmount(type, 100n), 0n);
+        assert.equal(expenseAmount(type, 100n), 0n);
+      }
+      const a = await prisma.account.create({
+        data: { name: "Personal test", type: "CHECKING" },
+      });
+      const entries = [
+        ["Mouna Hussen Safatli", "INCOME"],
+        ["Claro", "EXPENSE"],
+        ["Sami Safatli Caixa", "INCOME"],
+        ["Safatli Technologies", "INCOME"],
+        ["Light conta 1", "EXPENSE"],
+        ["Light conta 2", "EXPENSE"],
+        ["CEG conta 1", "EXPENSE"],
+        ["CEG conta 2", "EXPENSE"],
+        ["CEG conta 3", "EXPENSE"],
+        ["Nabil Safatli", "INCOME"],
+      ];
+      const candidates = entries.map(([description, type]) => ({
+        description,
+        type,
+        amountCents: "10000",
+        date: "2026-09-15",
+        sourceType: "BANK_STATEMENT",
+        externalId: null,
+      }));
+      for (const row of candidates)
+        await prisma.transaction.create({
+          data: {
+            description: row.description,
+            type: row.type,
+            amountCents: 10000n,
+            occurredAt: new Date("2026-09-15T12:00:00Z"),
+            accountId: a.id,
+            sourceType: row.sourceType,
+            fingerprint: transactionFingerprint({ ...row, accountId: a.id }),
+          },
+        });
+      const repair = await repairPersonalHistory();
+      assert.equal(repair.changed, 6);
+      assert.equal(repair.estimatedPairs, 1);
+      assert.ok(
+        backup.parseBackup(
+          await readFile(join(directory, repair.protectionFile), "utf8"),
+        ),
+      );
+      assert.equal((await repairPersonalHistory()).changed, 0);
+      assert.equal(
+        (
+          await countImportDuplicates(
+            candidates.map((row) => ({
+              ...row,
+              type: bankTransactionType(
+                row.description,
+                row.type === "EXPENSE" ? -10000n : 10000n,
+              ),
+            })),
+            a.id,
+          )
+        ).existing,
+        10,
+      );
+      const stored = await prisma.transaction.findMany({
+        where: { accountId: a.id },
+        include: { category: true },
+      });
+      assert.equal(
+        stored.find((r) => r.description === "Sami Safatli Caixa").category
+          .name,
+        "Salário repassado da Caixa",
+      );
+      assert.equal(
+        stored.filter((r) => r.type === "MOTHER_ESTIMATED_EXPENSE").length,
+        1,
+      );
+      assert.equal(
+        stored.filter(
+          (r) => r.description.startsWith("CEG") && r.type === "EXPENSE",
+        ).length,
+        3,
+      );
+      const parsed = backup.parseBackup(
+        backup.backupJson(await backup.createBackupObject()),
+      );
+      assert.ok(parsed);
+      await backup.restoreBackup(parsed);
+      assert.equal(
+        await prisma.transaction.count({
+          where: { accountId: a.id, type: { startsWith: "MOTHER_" } },
+        }),
+        3,
+      );
+      const form = new FormData();
+      form.set("filename", "salary.csv");
+      form.set("accountId", a.id);
+      form.set(
+        "transactions",
+        JSON.stringify([{ ...candidates[3], date: "2026-10-15" }]),
+      );
+      await assert.rejects(
+        saveNubankImport(form),
+        (error) => !!error.destination && !error.destination.includes("erro="),
+      );
+      assert.equal(
+        (
+          await prisma.transaction.findFirst({
+            where: {
+              accountId: a.id,
+              occurredAt: new Date("2026-10-15T12:00:00Z"),
+            },
+            include: { category: true },
+          })
+        ).category.name,
+        "Salário PJ — Monety",
+      );
+    },
+  );
   console.info(
     `Isolated test database: ${pathToFileURL(join(directory, "finance.db")).href}`,
   );

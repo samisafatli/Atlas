@@ -165,6 +165,9 @@ export default async function TransactionsPage({
       "TRANSFER",
       "INVESTMENT_DEPOSIT",
       "INVESTMENT_WITHDRAWAL",
+      "MOTHER_INCOME",
+      "MOTHER_EXPENSE",
+      "MOTHER_ESTIMATED_EXPENSE",
     ].includes(requestedType)
       ? requestedType
       : "";
@@ -328,6 +331,11 @@ export default async function TransactionsPage({
                 <option value="EXPENSE">Despesas</option>
                 <option value="INVESTMENT_DEPOSIT">Aplicações</option>
                 <option value="INVESTMENT_WITHDRAWAL">Resgates</option>
+                <option value="MOTHER_INCOME">Mãe — entrada</option>
+                <option value="MOTHER_EXPENSE">Mãe — pagamento</option>
+                <option value="MOTHER_ESTIMATED_EXPENSE">
+                  Mãe — pagamento estimado
+                </option>
                 <option value="REFUND">Créditos / estornos</option>
                 <option value="TRANSFER">Transferências / pagamentos</option>
               </select>

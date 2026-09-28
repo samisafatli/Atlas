@@ -8,6 +8,7 @@ import { existingImportFingerprints } from "@/lib/import-deduplication";
 import { matchCategoryRule, sortCategoryRules } from "@/lib/category-rules";
 import type { ImportedTransaction } from "@/lib/nubank-csv";
 import { categoryType, transactionTypes } from "@/lib/transaction-types";
+import { salaryCategory } from "@/lib/personal-rules";
 
 type PreviewRow = ImportedTransaction;
 
@@ -89,6 +90,21 @@ export async function saveNubankImport(formData: FormData) {
     );
     await prisma.$transaction(async (tx) => {
       const rows = files.flatMap((file) => file.transactions);
+      const salaryIds = new Map<string, string>();
+      for (const name of new Set(
+        rows
+          .map((row) =>
+            salaryCategory(row.description, row.type, row.sourceType),
+          )
+          .filter((name) => name !== null),
+      )) {
+        const category = await tx.category.upsert({
+          where: { name_type: { name, type: "INCOME" } },
+          create: { name, type: "INCOME" },
+          update: {},
+        });
+        salaryIds.set(name, category.id);
+      }
       const fingerprints = await existingImportFingerprints(
         tx,
         rows.map((row) => ({ ...row, accountId })),
@@ -121,7 +137,13 @@ export async function saveNubankImport(formData: FormData) {
                 fingerprint,
                 sourceType: row.sourceType,
                 externalId: row.externalId,
-                categoryId: matchedCategory?.category.id ?? null,
+                categoryId:
+                  salaryIds.get(
+                    salaryCategory(row.description, row.type, row.sourceType) ??
+                      "",
+                  ) ??
+                  matchedCategory?.category.id ??
+                  null,
               },
             ];
           });

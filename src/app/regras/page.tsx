@@ -19,6 +19,29 @@ export default async function CategoryRulesPage({
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
       <h1 className="mb-3 text-3xl font-medium">Regras automáticas</h1>
+      <section className="my-5 rounded-xl border border-[var(--line)] p-4 text-sm leading-6">
+        <h2 className="font-medium">Regras pessoais do extrato</h2>
+        <p>
+          Entradas de Mouna e pagamentos a BAP Administração, Claro e Prevent
+          Senior pertencem à sua mãe e não entram nos totais pessoais. Compras
+          no cartão não usam essas regras.
+        </p>
+        <p>
+          Entradas de Safatli Technologies são salário PJ; entradas de Sami
+          Safatli identificadas como Caixa são salário repassado. Saídas de Sami
+          e acertos com Nabil ou Paula exigem revisão.
+        </p>
+        <p>
+          Light/Naturgy: somente o histórico até 28/09/2026 recebeu uma divisão
+          estimada quando havia exatamente dois pagamentos por fornecedor, conta
+          e mês. Novos pagamentos precisam de classificação manual em Transações
+          → Editar → Tipo.
+        </p>
+        <p>
+          Essas regras pessoais são configuradas no código. As regras editáveis
+          abaixo alteram apenas a categoria.
+        </p>
+      </section>
       <p className="mb-7 text-sm leading-6 text-[var(--muted)]">
         Regras determinísticas são aplicadas somente durante novas importações.
         A regra com o termo mais longo vence; empates usam a regra criada

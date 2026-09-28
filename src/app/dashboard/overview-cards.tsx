@@ -3,11 +3,9 @@ import { formatCents } from "@/lib/finance-format";
 export function OverviewCards({
   income,
   expenses,
-  cumulativeBalance,
 }: {
   income: bigint;
   expenses: bigint;
-  cumulativeBalance: bigint;
 }) {
   const balance = income - expenses;
   const cards = [
@@ -18,14 +16,9 @@ export function OverviewCards({
       amount: balance,
       tone: balance >= 0n ? "text-emerald-800" : "text-rose-800",
     },
-    {
-      label: "Resultado acumulado",
-      amount: cumulativeBalance,
-      tone: cumulativeBalance >= 0n ? "text-emerald-800" : "text-rose-800",
-    },
   ];
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => (
         <article
           className="rounded-2xl border border-[var(--line)] bg-white/80 p-5"
@@ -37,10 +30,10 @@ export function OverviewCards({
           >
             {formatCents(card.amount)}
           </p>
-          {card.label === "Resultado acumulado" ? (
+          {card.label === "Resultado do período" ? (
             <p className="mt-2 text-xs text-[var(--muted)]">
-              Receitas menos despesas líquidas até o fim do mês. Não é saldo
-              bancário; não inclui saldo inicial nem patrimônio.
+              Receitas menos despesas líquidas do mês. Não é saldo bancário nem
+              dinheiro disponível.
             </p>
           ) : null}
         </article>

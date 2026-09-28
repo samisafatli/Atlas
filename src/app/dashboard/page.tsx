@@ -6,7 +6,7 @@ import { SpendingCalendar } from "./spending-calendar";
 import { CategoryBreakdown } from "./category-breakdown";
 import { RecentTransactions } from "./recent-transactions";
 import { MonthlyClose } from "./monthly-close";
-import { resultAmount, expenseAmount } from "@/lib/transaction-types";
+import { expenseAmount } from "@/lib/transaction-types";
 import { formatCents } from "@/lib/finance-format";
 
 export const metadata = {
@@ -53,32 +53,21 @@ export default async function DashboardPage({
   const nextMonth = getMonthRange(nextCandidate)
     ? nextCandidate
     : selectedMonth;
-  const [transactions, previousTransactions, cumulativeTotals] =
-    await Promise.all([
-      prisma.transaction.findMany({
-        where: { occurredAt: { gte: range.start, lt: range.end } },
-        include: { category: true, account: true },
-        orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
-      }),
-      previousRange
-        ? prisma.transaction.findMany({
-            where: {
-              occurredAt: { gte: previousRange.start, lt: previousRange.end },
-            },
-            include: { category: true },
-          })
-        : Promise.resolve([]),
-      prisma.transaction.groupBy({
-        by: ["type"],
-        where: { occurredAt: { lt: range.end } },
-        _sum: { amountCents: true },
-      }),
-    ]);
-  const cumulativeBalance = cumulativeTotals.reduce(
-    (sum, group) =>
-      sum + resultAmount(group.type, group._sum.amountCents ?? 0n),
-    0n,
-  );
+  const [transactions, previousTransactions] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { occurredAt: { gte: range.start, lt: range.end } },
+      include: { category: true, account: true },
+      orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+    }),
+    previousRange
+      ? prisma.transaction.findMany({
+          where: {
+            occurredAt: { gte: previousRange.start, lt: previousRange.end },
+          },
+          include: { category: true },
+        })
+      : Promise.resolve([]),
+  ]);
   const incomes = transactions.filter((item) => item.type === "INCOME");
   const expenses = transactions
     .filter((item) => ["EXPENSE", "REFUND"].includes(item.type))
@@ -102,7 +91,9 @@ export default async function DashboardPage({
       <section>
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="mb-2 text-sm text-[var(--muted)]">Visão geral</p>
+            <p className="mb-2 text-sm text-[var(--muted)]">
+              Finanças pessoais · Nubank
+            </p>
             <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">
               Dashboard
             </h1>
@@ -127,15 +118,18 @@ export default async function DashboardPage({
             </Link>
           </div>
         </div>
-        <OverviewCards
-          income={incomeTotal}
-          expenses={expenseTotal}
-          cumulativeBalance={cumulativeBalance}
-        />
+        <OverviewCards income={incomeTotal} expenses={expenseTotal} />
         <p className="mt-4 text-sm text-[var(--muted)]">
           Cobranças/despesas: {formatCents(grossExpenses)} · Créditos/estornos:{" "}
           {formatCents(refunds)}. Pagamentos de fatura, transferências e
-          movimentos de investimento ficam fora do resultado.
+          movimentos de investimento e valores da sua mãe ficam fora do
+          resultado.
+        </p>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Receitas incluem o salário líquido repassado da Caixa. Contas pagas
+          fora do Nubank não estão incluídas. Acertos pessoais e contas de
+          Light/Naturgy ainda precisam de revisão; divisões históricas estão
+          marcadas como estimadas.
         </p>
         {transactions.some((item) => item.sourceType === "CREDIT_CARD") ? (
           <p className="mt-3 rounded-xl bg-amber-50 p-4 text-sm">

@@ -39,6 +39,16 @@ export function previousTransactionFingerprint(
 }
 
 export function transactionFingerprint(transaction: FingerprintTransaction) {
+  // Ownership does not change the original bank identity.
+  transaction = {
+    ...transaction,
+    type:
+      transaction.type === "MOTHER_INCOME"
+        ? "INCOME"
+        : transaction.type.startsWith("MOTHER_")
+          ? "EXPENSE"
+          : transaction.type,
+  };
   const source = transaction.sourceType ?? "BANK_STATEMENT";
   const identity = transaction.externalId
     ? [transaction.accountId, source, transaction.externalId]

@@ -33,6 +33,9 @@ function readTransaction(formData: FormData, categoryRequired = false) {
       "TRANSFER",
       "INVESTMENT_DEPOSIT",
       "INVESTMENT_WITHDRAWAL",
+      "MOTHER_INCOME",
+      "MOTHER_EXPENSE",
+      "MOTHER_ESTIMATED_EXPENSE",
     ].includes(type) ||
     (categoryRequired && categoryType(type) !== null && !categoryId) ||
     !accountId

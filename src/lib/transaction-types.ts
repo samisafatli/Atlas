@@ -1,4 +1,7 @@
 export const transactionTypes = [
+  "MOTHER_INCOME",
+  "MOTHER_EXPENSE",
+  "MOTHER_ESTIMATED_EXPENSE",
   "INCOME",
   "EXPENSE",
   "REFUND",
@@ -8,6 +11,9 @@ export const transactionTypes = [
 ] as const;
 export type TransactionType = (typeof transactionTypes)[number];
 export const typeLabels: Record<string, string> = {
+  MOTHER_INCOME: "Mãe — entrada",
+  MOTHER_EXPENSE: "Mãe — pagamento",
+  MOTHER_ESTIMATED_EXPENSE: "Mãe — pagamento estimado",
   INCOME: "Receita",
   EXPENSE: "Despesa",
   REFUND: "Crédito / estorno",
@@ -18,7 +24,14 @@ export const typeLabels: Record<string, string> = {
 export function categoryType(type: string) {
   return type === "REFUND"
     ? "EXPENSE"
-    : ["TRANSFER", "INVESTMENT_DEPOSIT", "INVESTMENT_WITHDRAWAL"].includes(type)
+    : [
+          "TRANSFER",
+          "INVESTMENT_DEPOSIT",
+          "INVESTMENT_WITHDRAWAL",
+          "MOTHER_INCOME",
+          "MOTHER_EXPENSE",
+          "MOTHER_ESTIMATED_EXPENSE",
+        ].includes(type)
       ? null
       : type;
 }
@@ -35,7 +48,12 @@ export function expenseAmount(type: string, cents: bigint) {
 export function transactionSign(type: string) {
   return type === "TRANSFER"
     ? "↔ "
-    : ["EXPENSE", "INVESTMENT_DEPOSIT"].includes(type)
+    : [
+          "EXPENSE",
+          "INVESTMENT_DEPOSIT",
+          "MOTHER_EXPENSE",
+          "MOTHER_ESTIMATED_EXPENSE",
+        ].includes(type)
       ? "− "
       : "+ ";
 }
