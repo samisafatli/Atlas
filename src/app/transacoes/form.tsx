@@ -133,27 +133,34 @@ export function TransactionForm({
           </option>
         </select>
       </label>
-      <label className="grid gap-2 text-sm font-medium">
-        Categoria
-        <select
-          name="categoryId"
-          required={requireCategory && categoryType(type) !== null}
-          value={categoryId}
-          onChange={(event) => setCategoryId(event.target.value)}
-          className="min-h-11 rounded-lg border border-[var(--line)] px-3 font-normal"
-        >
-          {!requireCategory || categoryType(type) === null ? (
-            <option value="">Sem categoria</option>
-          ) : null}
-          {categories
-            .filter((category) => category.type === categoryType(type))
-            .map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-        </select>
-      </label>
+      {categoryType(type) === null ? (
+        <div className="grid gap-2 text-sm font-medium">
+          <span>Categoria</span>
+          <p className="flex min-h-11 items-center text-[var(--muted)] font-normal">
+            Não se aplica
+          </p>
+        </div>
+      ) : (
+        <label className="grid gap-2 text-sm font-medium">
+          Categoria
+          <select
+            name="categoryId"
+            required={requireCategory}
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className="min-h-11 rounded-lg border border-[var(--line)] px-3 font-normal"
+          >
+            {!requireCategory ? <option value="">Sem categoria</option> : null}
+            {categories
+              .filter((category) => category.type === categoryType(type))
+              .map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+          </select>
+        </label>
+      )}
       <label className="grid gap-2 text-sm font-medium">
         Conta
         <select
