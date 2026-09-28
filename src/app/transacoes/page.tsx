@@ -275,6 +275,7 @@ export default async function TransactionsPage({
             categories={categories}
             returnTo={returnTo}
             hasFilters={hasFilters}
+            yearFiltered={Boolean(year)}
           />
           {total > 0 ? (
             <Pagination

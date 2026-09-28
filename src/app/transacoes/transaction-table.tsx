@@ -25,12 +25,27 @@ export function TransactionTable({
   categories,
   returnTo,
   hasFilters,
+  yearFiltered,
 }: {
   transactions: Row[];
   categories: { id: string; name: string; type: string }[];
   returnTo: string;
   hasFilters: boolean;
+  yearFiltered: boolean;
 }) {
+  // The year is noise when the page cannot mix years with the current one.
+  const currentYear = new Date().getUTCFullYear();
+  const dateFormat = new Intl.DateTimeFormat("pt-BR", {
+    day: "numeric",
+    month: "short",
+    ...(yearFiltered ||
+    transactions.every(
+      (transaction) => transaction.occurredAt.getUTCFullYear() === currentYear,
+    )
+      ? {}
+      : { year: "numeric" }),
+    timeZone: "UTC",
+  });
   return transactions.length === 0 ? (
     <div className="px-6 py-16 text-center">
       <div
@@ -85,13 +100,14 @@ export function TransactionTable({
         </thead>
         <tbody className="divide-y divide-[var(--line)]">
           {transactions.map((transaction) => {
-            const isIncome = transaction.type === "INCOME";
-            const isExpense = transaction.type === "EXPENSE";
-            const tone = isIncome
-              ? "text-emerald-700"
-              : isExpense
-                ? "text-rose-700"
-                : "text-[var(--foreground)]";
+            const tone =
+              transaction.type === "INCOME"
+                ? "text-emerald-700"
+                : transaction.type === "EXPENSE"
+                  ? "text-rose-700"
+                  : transaction.type === "REFUND"
+                    ? "text-sky-700"
+                    : "text-[var(--foreground)]";
             const typeLabel = typeLabels[transaction.type] ?? transaction.type;
             const amountSign = transactionSign(transaction.type);
 
@@ -99,10 +115,7 @@ export function TransactionTable({
               <tr key={transaction.id}>
                 <td className="whitespace-nowrap px-6 py-4 text-[var(--muted)]">
                   <time dateTime={transaction.occurredAt.toISOString()}>
-                    {new Intl.DateTimeFormat("pt-BR", {
-                      dateStyle: "medium",
-                      timeZone: "UTC",
-                    }).format(transaction.occurredAt)}
+                    {dateFormat.format(transaction.occurredAt)}
                   </time>
                 </td>
                 <td className="px-6 py-4 font-medium">
@@ -148,7 +161,7 @@ export function TransactionTable({
                     tone
                   }
                 >
-                  {amountSign}{" "}
+                  {amountSign}
                   {formatCents(
                     transaction.amountCents,
                     transaction.account.currency,
