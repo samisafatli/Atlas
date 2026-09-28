@@ -1,4 +1,5 @@
 import { ImportPreview } from "./preview";
+import { PageShell } from "@/app/page-shell";
 
 export const metadata = {
   description:
@@ -12,7 +13,7 @@ export default async function ImportPage({
 }) {
   const { erro } = await searchParams;
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="wide">
       <section>
         <h1 className="mb-3 text-3xl font-medium">
           Prévia do arquivo do Nubank
@@ -32,6 +33,6 @@ export default async function ImportPage({
           </p>
         ) : null}
       </section>
-    </main>
+    </PageShell>
   );
 }

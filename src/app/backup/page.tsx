@@ -1,9 +1,10 @@
 import { RestoreForm } from "./restore-form";
 import { ClearForm } from "./clear-form";
+import { PageShell } from "@/app/page-shell";
 
 export default function BackupPage() {
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="narrow">
       <h1 className="text-3xl font-medium">Backup e restauração</h1>
       <section className="mt-7 grid gap-6">
         <article className="rounded-2xl border border-[var(--line)] bg-white/80 p-5">
@@ -42,6 +43,6 @@ export default function BackupPage() {
           <ClearForm />
         </article>
       </section>
-    </main>
+    </PageShell>
   );
 }

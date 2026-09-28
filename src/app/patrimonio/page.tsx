@@ -4,6 +4,7 @@ import { formatCents } from "@/lib/finance-format";
 import { saveAssetAccount, deleteAssetAccount } from "./actions";
 import { SnapshotChart } from "./snapshot-chart";
 import { ConfirmSnapshotDelete } from "./snapshot-delete";
+import { PageShell } from "@/app/page-shell";
 
 const assetTypeLabels: Record<string, string> = {
   CHECKING: "Conta corrente",
@@ -38,7 +39,7 @@ export default async function AssetsPage({
       "Não foi possível salvar. Talvez já exista um snapshot nessa data.",
   };
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="wider">
       <section>
         <h1 className="text-3xl font-medium">Patrimônio</h1>
 
@@ -227,6 +228,6 @@ export default async function AssetsPage({
           ) : null}
         </section>
       </section>
-    </main>
+    </PageShell>
   );
 }

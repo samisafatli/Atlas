@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { sourceLabels } from "@/lib/nubank-csv";
+import { PageShell } from "@/app/page-shell";
 export const dynamic = "force-dynamic";
 
 export default async function ImportHistoryPage() {
@@ -8,7 +9,7 @@ export default async function ImportHistoryPage() {
     orderBy: { importedAt: "desc" },
   });
   return (
-    <main className="mx-auto min-h-screen max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="medium">
       <h1 className="text-3xl font-medium">Histórico de importações</h1>
       <p className="mt-2 text-sm text-[var(--muted)]">
         Arquivos processados e quantidade de novas transações gravadas.
@@ -54,6 +55,6 @@ export default async function ImportHistoryPage() {
           Nenhuma importação registrada ainda.
         </p>
       )}
-    </main>
+    </PageShell>
   );
 }

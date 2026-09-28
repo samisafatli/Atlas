@@ -7,6 +7,7 @@ import { CategoryBreakdown } from "./category-breakdown";
 import { RecentTransactions } from "./recent-transactions";
 import { MonthlyClose } from "./monthly-close";
 import { expenseAmount } from "@/lib/transaction-types";
+import { PageShell } from "@/app/page-shell";
 
 export const metadata = {
   description: "Resumo mensal das finanças pessoais.",
@@ -79,7 +80,7 @@ export default async function DashboardPage({
     0n,
   );
   return (
-    <main className="mx-auto min-h-screen max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell>
       <section>
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -133,7 +134,6 @@ export default async function DashboardPage({
             month={selectedMonth}
           />
           <MonthlyClose
-            month={selectedMonth}
             income={incomeTotal}
             expenses={expenseTotal}
             currentTransactions={transactions}
@@ -142,6 +142,6 @@ export default async function DashboardPage({
           />
         </div>
       </section>
-    </main>
+    </PageShell>
   );
 }

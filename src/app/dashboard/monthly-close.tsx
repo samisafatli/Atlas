@@ -15,7 +15,6 @@ export function MonthlyClose({
   previousTransactions,
   previousMonth,
 }: {
-  month: string;
   income: bigint;
   expenses: bigint;
   currentTransactions: Entry[];
@@ -61,20 +60,7 @@ export function MonthlyClose({
           Comparar com mês anterior
         </Link>
       </div>
-      <div className="grid gap-3 text-sm sm:grid-cols-3">
-        <p className="rounded-lg bg-[#f7f8f5] p-3">
-          Receitas<strong className="mt-1 block">{formatCents(income)}</strong>
-        </p>
-        <p className="rounded-lg bg-[#f7f8f5] p-3">
-          Despesas líquidas
-          <strong className="mt-1 block">{formatCents(expenses)}</strong>
-        </p>
-        <p className="rounded-lg bg-[#f7f8f5] p-3">
-          Resultado
-          <strong className="mt-1 block">{formatCents(savings)}</strong>
-        </p>
-      </div>
-      <p className="mt-4 text-sm text-[var(--muted)]">
+      <p className="text-sm text-[var(--muted)]">
         Resultado / receitas informadas:{" "}
         {savingsRate === null
           ? "— (sem receitas)"

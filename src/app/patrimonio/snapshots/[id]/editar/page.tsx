@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AssetSnapshotForm } from "../../../snapshot-form";
+import { PageShell } from "@/app/page-shell";
 
 export default async function EditSnapshotPage({
   params,
@@ -20,7 +21,7 @@ export default async function EditSnapshotPage({
   ]);
   if (!snapshot) notFound();
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="narrow">
       <Link className="text-sm text-[var(--muted)]" href="/patrimonio">
         ← Patrimônio
       </Link>
@@ -29,6 +30,6 @@ export default async function EditSnapshotPage({
         Esta alteração é explícita e atualiza o registro histórico.
       </p>
       <AssetSnapshotForm accounts={accounts} snapshot={snapshot} />
-    </main>
+    </PageShell>
   );
 }

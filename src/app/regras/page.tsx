@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { deleteCategoryRule, saveCategoryRule } from "./actions";
+import { PageShell } from "@/app/page-shell";
 
 export default async function CategoryRulesPage({
   searchParams,
@@ -15,7 +16,7 @@ export default async function CategoryRulesPage({
     searchParams,
   ]);
   return (
-    <main className="mx-auto min-h-screen max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="medium">
       <h1 className="mb-7 text-3xl font-medium">Regras automáticas</h1>
       {query.erro ? (
         <p
@@ -142,6 +143,6 @@ export default async function CategoryRulesPage({
           </p>
         )}
       </section>
-    </main>
+    </PageShell>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatCents } from "@/lib/finance-format";
 import { detectRecurringExpenses } from "./recurrence";
+import { PageShell } from "@/app/page-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function RecurringPage() {
     })),
   );
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="wide">
       <h1 className="text-3xl font-medium">Gastos recorrentes</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
         Estimativas mensais com base nos últimos 12 meses.
@@ -91,6 +92,6 @@ export default async function RecurringPage() {
           três ocorrências, elas aparecerão aqui.
         </p>
       )}
-    </main>
+    </PageShell>
   );
 }

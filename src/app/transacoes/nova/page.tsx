@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TransactionForm } from "../form";
+import { PageShell } from "@/app/page-shell";
 
 export default async function NewTransactionPage({
   searchParams,
@@ -13,7 +14,7 @@ export default async function NewTransactionPage({
     searchParams,
   ]);
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="narrow">
       <Link className="text-sm text-[var(--muted)]" href="/transacoes">
         ← Transações
       </Link>
@@ -31,6 +32,6 @@ export default async function NewTransactionPage({
       ) : (
         <p role="alert">Cadastre uma conta antes de criar transações.</p>
       )}
-    </main>
+    </PageShell>
   );
 }

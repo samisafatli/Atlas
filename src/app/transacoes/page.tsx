@@ -10,6 +10,7 @@ import {
   transactionSign,
 } from "@/lib/transaction-types";
 import { updateTransactionCategory } from "./actions";
+import { PageShell } from "@/app/page-shell";
 
 export const metadata = {
   description: "Consulte as transações registradas no Atlas.",
@@ -242,365 +243,354 @@ export default async function TransactionsPage({
   );
 
   return (
-    <main className="min-h-screen px-5 py-8 sm:px-8 sm:py-12">
-      <div className="mx-auto max-w-6xl">
-        <section aria-labelledby="transactions-title">
-          <div className="mb-8">
-            <h1
-              className="text-3xl font-medium tracking-tight sm:text-4xl"
-              id="transactions-title"
-            >
-              Transações
-            </h1>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                className="inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
-                href="/transacoes/nova"
-              >
-                Nova transação
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
-                href="/importar"
-              >
-                Importar arquivos
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
-                href="/importar/historico"
-              >
-                Histórico de importações
-              </Link>
-            </div>
-          </div>
-
-          {successMessage ? (
-            <p
-              className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
-              role="status"
-            >
-              {successMessage === "criada"
-                ? "Transação criada com sucesso."
-                : successMessage === "atualizada"
-                  ? "Transação atualizada com sucesso."
-                  : successMessage === "importadas"
-                    ? `${importedCount} novas transações importadas; ${duplicateCount} repetidas ignoradas.`
-                    : "Transação excluída com sucesso."}
-            </p>
-          ) : null}
-          {noticeError ? (
-            <p
-              className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
-              role="alert"
-            >
-              Não foi possível concluir a operação. Verifique os dados e tente
-              novamente.
-            </p>
-          ) : null}
-          {firstValue(params.categoriaStatus) === "atualizada" ? (
-            <p
-              className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
-              role="status"
-            >
-              Categoria atualizada.
-            </p>
-          ) : null}
-
-          <form
-            action="/transacoes"
-            className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1fr_1fr_1.2fr_auto_auto] lg:items-end"
-            method="get"
+    <PageShell>
+      <section aria-labelledby="transactions-title">
+        <div className="mb-8">
+          <h1
+            className="text-3xl font-medium tracking-tight sm:text-4xl"
+            id="transactions-title"
           >
-            {importId ? (
-              <input type="hidden" name="importId" value={importId} />
-            ) : null}
-            <PeriodFilter
-              key={`${year}-${month}-${day}`}
-              year={year}
-              month={month}
-              day={day}
-              years={years}
-            />
+            Transações
+          </h1>
 
-            <label className="grid gap-2 text-sm font-medium" htmlFor="type">
-              Tipo
-              <select
-                className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
-                id="type"
-                name="type"
-                defaultValue={type}
-              >
-                <option value="">Todos</option>
-                <option value="INCOME">Receitas</option>
-                <option value="EXPENSE">Despesas</option>
-                <option value="INVESTMENT_DEPOSIT">Aplicações</option>
-                <option value="INVESTMENT_WITHDRAWAL">Resgates</option>
-                <option value="MOTHER_INCOME">Mãe — entrada</option>
-                <option value="MOTHER_EXPENSE">Mãe — pagamento</option>
-                <option value="MOTHER_ESTIMATED_EXPENSE">
-                  Mãe — pagamento estimado
-                </option>
-                <option value="REFUND">Créditos / estornos</option>
-                <option value="TRANSFER">Transferências / pagamentos</option>
-              </select>
-            </label>
-
-            <label
-              className="grid gap-2 text-sm font-medium"
-              htmlFor="category"
-            >
-              Categoria
-              <select
-                className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
-                id="category"
-                name="category"
-                defaultValue={categoryId}
-              >
-                <option value="">Todas</option>
-                <option value="uncategorized">Sem categoria</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <button
-              className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
-              type="submit"
-            >
-              Filtrar
-            </button>
+          <div className="mt-5 flex flex-wrap gap-3">
             <Link
-              className="inline-flex min-h-11 items-center justify-center px-2 text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]"
-              href="/transacoes"
+              className="inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
+              href="/transacoes/nova"
             >
-              Limpar
+              Nova transação
             </Link>
-          </form>
-
-          <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80">
-            <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4 sm:px-6">
-              <h2 className="font-medium">Todas as transações</h2>
-              <span className="text-sm text-[var(--muted)]">
-                {total > 0
-                  ? `${offset + 1}–${offset + transactions.length} de ${total}`
-                  : 0}{" "}
-                {total === 1 ? "registro" : "registros"}
-                {day
-                  ? ` em ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}`
-                  : ""}
-              </span>
-            </div>
-            {transactions.length === 0 ? (
-              <div className="px-6 py-16 text-center">
-                <div
-                  aria-hidden="true"
-                  className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-[#e9f0eb] text-xl text-[var(--accent)]"
-                >
-                  {hasFilters ? "⌕" : "—"}
-                </div>
-                <h3 className="font-medium">
-                  {hasFilters
-                    ? "Nenhuma transação encontrada"
-                    : "Ainda não há transações"}
-                </h3>
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[var(--muted)]">
-                  {hasFilters
-                    ? "Tente mudar ou limpar os filtros para ver outros resultados."
-                    : "Quando houver transações registradas, elas aparecerão aqui."}
-                </p>
-                {hasFilters ? (
-                  <Link
-                    className="mt-5 inline-flex text-sm font-medium text-[var(--accent)] hover:underline"
-                    href="/transacoes"
-                  >
-                    Limpar filtros
-                  </Link>
-                ) : null}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                  <thead className="bg-[#f7f8f5] text-xs tracking-wide text-[var(--muted)] uppercase">
-                    <tr>
-                      <th className="px-6 py-3 font-medium" scope="col">
-                        Data
-                      </th>
-                      <th className="px-6 py-3 font-medium" scope="col">
-                        Descrição
-                      </th>
-                      <th className="px-6 py-3 font-medium" scope="col">
-                        Categoria
-                      </th>
-                      <th className="px-6 py-3 font-medium" scope="col">
-                        Conta
-                      </th>
-                      <th
-                        className="px-6 py-3 text-right font-medium"
-                        scope="col"
-                      >
-                        Valor
-                      </th>
-                      <th
-                        className="px-6 py-3 text-right font-medium"
-                        scope="col"
-                      >
-                        Ações
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--line)]">
-                    {transactions.map((transaction) => {
-                      const isIncome = transaction.type === "INCOME";
-                      const isExpense = transaction.type === "EXPENSE";
-                      const tone = isIncome
-                        ? "text-emerald-700"
-                        : isExpense
-                          ? "text-rose-700"
-                          : "text-[var(--foreground)]";
-                      const typeLabel =
-                        typeLabels[transaction.type] ?? transaction.type;
-                      const amountSign = transactionSign(transaction.type);
-
-                      return (
-                        <tr key={transaction.id}>
-                          <td className="whitespace-nowrap px-6 py-4 text-[var(--muted)]">
-                            <time
-                              dateTime={transaction.occurredAt.toISOString()}
-                            >
-                              {new Intl.DateTimeFormat("pt-BR", {
-                                dateStyle: "medium",
-                                timeZone: "UTC",
-                              }).format(transaction.occurredAt)}
-                            </time>
-                          </td>
-                          <td className="px-6 py-4 font-medium">
-                            <span>{transaction.description}</span>
-                            <span
-                              className={
-                                "mt-1 block text-xs font-normal " + tone
-                              }
-                            >
-                              {typeLabel}
-                            </span>
-                            {transaction.ownershipEstimated ? (
-                              <span className="mt-1 block text-xs font-normal text-amber-800">
-                                Divisão estimada com sua mãe
-                              </span>
-                            ) : null}
-                          </td>
-                          <td className="px-6 py-4 text-[var(--muted)]">
-                            {categoryType(transaction.type) === null ? (
-                              <span>Não se aplica</span>
-                            ) : (
-                              <form
-                                action={updateTransactionCategory.bind(
-                                  null,
-                                  transaction.id,
-                                )}
-                              >
-                                <input
-                                  type="hidden"
-                                  name="returnTo"
-                                  value={returnTo}
-                                />
-                                <CategorySelect
-                                  key={
-                                    transaction.categoryId ?? "uncategorized"
-                                  }
-                                  description={transaction.description}
-                                  categoryId={transaction.categoryId}
-                                  categories={categories.filter(
-                                    (category) =>
-                                      category.type ===
-                                      categoryType(transaction.type),
-                                  )}
-                                />
-                              </form>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-[var(--muted)]">
-                            {transaction.account.name}
-                          </td>
-                          <td
-                            className={
-                              "whitespace-nowrap px-6 py-4 text-right font-semibold " +
-                              tone
-                            }
-                          >
-                            {amountSign}{" "}
-                            {formatCurrencyFromCents(
-                              transaction.amountCents,
-                              transaction.account.currency,
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-3">
-                              <Link
-                                className="text-sm text-[var(--accent)] hover:underline"
-                                href={`/transacoes/${transaction.id}/editar`}
-                              >
-                                Editar
-                              </Link>
-                              <ConfirmDelete
-                                id={transaction.id}
-                                description={transaction.description}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {total > 0 ? (
-              <nav
-                aria-label="Paginação das transações"
-                className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-4"
-              >
-                {page > 1 ? (
-                  <Link
-                    className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
-                    href={pageHref(page - 1)}
-                  >
-                    ← Anterior
-                  </Link>
-                ) : (
-                  <span
-                    aria-disabled="true"
-                    className="px-4 text-sm text-[var(--muted)] opacity-50"
-                  >
-                    ← Anterior
-                  </span>
-                )}
-                <span className="text-sm text-[var(--muted)]">
-                  Página {page} de {pageCount}
-                </span>
-                {page < pageCount ? (
-                  <Link
-                    className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
-                    href={pageHref(page + 1)}
-                  >
-                    Próxima →
-                  </Link>
-                ) : (
-                  <span
-                    aria-disabled="true"
-                    className="px-4 text-sm text-[var(--muted)] opacity-50"
-                  >
-                    Próxima →
-                  </span>
-                )}
-              </nav>
-            ) : null}{" "}
+            <Link
+              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
+              href="/importar"
+            >
+              Importar arquivos
+            </Link>
+            <Link
+              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-5 text-sm font-medium"
+              href="/importar/historico"
+            >
+              Histórico de importações
+            </Link>
           </div>
-        </section>
-      </div>
-    </main>
+        </div>
+
+        {successMessage ? (
+          <p
+            className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+            role="status"
+          >
+            {successMessage === "criada"
+              ? "Transação criada com sucesso."
+              : successMessage === "atualizada"
+                ? "Transação atualizada com sucesso."
+                : successMessage === "importadas"
+                  ? `${importedCount} novas transações importadas; ${duplicateCount} repetidas ignoradas.`
+                  : "Transação excluída com sucesso."}
+          </p>
+        ) : null}
+        {noticeError ? (
+          <p
+            className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
+            role="alert"
+          >
+            Não foi possível concluir a operação. Verifique os dados e tente
+            novamente.
+          </p>
+        ) : null}
+        {firstValue(params.categoriaStatus) === "atualizada" ? (
+          <p
+            className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+            role="status"
+          >
+            Categoria atualizada.
+          </p>
+        ) : null}
+
+        <form
+          action="/transacoes"
+          className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1fr_1fr_1.2fr_auto_auto] lg:items-end"
+          method="get"
+        >
+          {importId ? (
+            <input type="hidden" name="importId" value={importId} />
+          ) : null}
+          <PeriodFilter
+            key={`${year}-${month}-${day}`}
+            year={year}
+            month={month}
+            day={day}
+            years={years}
+          />
+
+          <label className="grid gap-2 text-sm font-medium" htmlFor="type">
+            Tipo
+            <select
+              className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
+              id="type"
+              name="type"
+              defaultValue={type}
+            >
+              <option value="">Todos</option>
+              <option value="INCOME">Receitas</option>
+              <option value="EXPENSE">Despesas</option>
+              <option value="INVESTMENT_DEPOSIT">Aplicações</option>
+              <option value="INVESTMENT_WITHDRAWAL">Resgates</option>
+              <option value="MOTHER_INCOME">Mãe — entrada</option>
+              <option value="MOTHER_EXPENSE">Mãe — pagamento</option>
+              <option value="MOTHER_ESTIMATED_EXPENSE">
+                Mãe — pagamento estimado
+              </option>
+              <option value="REFUND">Créditos / estornos</option>
+              <option value="TRANSFER">Transferências / pagamentos</option>
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm font-medium" htmlFor="category">
+            Categoria
+            <select
+              className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
+              id="category"
+              name="category"
+              defaultValue={categoryId}
+            >
+              <option value="">Todas</option>
+              <option value="uncategorized">Sem categoria</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+            type="submit"
+          >
+            Filtrar
+          </button>
+          <Link
+            className="inline-flex min-h-11 items-center justify-center px-2 text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]"
+            href="/transacoes"
+          >
+            Limpar
+          </Link>
+        </form>
+
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80">
+          <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4 sm:px-6">
+            <h2 className="font-medium">Todas as transações</h2>
+            <span className="text-sm text-[var(--muted)]">
+              {total > 0
+                ? `${offset + 1}–${offset + transactions.length} de ${total}`
+                : 0}{" "}
+              {total === 1 ? "registro" : "registros"}
+              {day
+                ? ` em ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}`
+                : ""}
+            </span>
+          </div>
+          {transactions.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <div
+                aria-hidden="true"
+                className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-[#e9f0eb] text-xl text-[var(--accent)]"
+              >
+                {hasFilters ? "⌕" : "—"}
+              </div>
+              <h3 className="font-medium">
+                {hasFilters
+                  ? "Nenhuma transação encontrada"
+                  : "Ainda não há transações"}
+              </h3>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[var(--muted)]">
+                {hasFilters
+                  ? "Tente mudar ou limpar os filtros para ver outros resultados."
+                  : "Quando houver transações registradas, elas aparecerão aqui."}
+              </p>
+              {hasFilters ? (
+                <Link
+                  className="mt-5 inline-flex text-sm font-medium text-[var(--accent)] hover:underline"
+                  href="/transacoes"
+                >
+                  Limpar filtros
+                </Link>
+              ) : null}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+                <thead className="bg-[#f7f8f5] text-xs tracking-wide text-[var(--muted)] uppercase">
+                  <tr>
+                    <th className="px-6 py-3 font-medium" scope="col">
+                      Data
+                    </th>
+                    <th className="px-6 py-3 font-medium" scope="col">
+                      Descrição
+                    </th>
+                    <th className="px-6 py-3 font-medium" scope="col">
+                      Categoria
+                    </th>
+                    <th className="px-6 py-3 font-medium" scope="col">
+                      Conta
+                    </th>
+                    <th
+                      className="px-6 py-3 text-right font-medium"
+                      scope="col"
+                    >
+                      Valor
+                    </th>
+                    <th
+                      className="px-6 py-3 text-right font-medium"
+                      scope="col"
+                    >
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--line)]">
+                  {transactions.map((transaction) => {
+                    const isIncome = transaction.type === "INCOME";
+                    const isExpense = transaction.type === "EXPENSE";
+                    const tone = isIncome
+                      ? "text-emerald-700"
+                      : isExpense
+                        ? "text-rose-700"
+                        : "text-[var(--foreground)]";
+                    const typeLabel =
+                      typeLabels[transaction.type] ?? transaction.type;
+                    const amountSign = transactionSign(transaction.type);
+
+                    return (
+                      <tr key={transaction.id}>
+                        <td className="whitespace-nowrap px-6 py-4 text-[var(--muted)]">
+                          <time dateTime={transaction.occurredAt.toISOString()}>
+                            {new Intl.DateTimeFormat("pt-BR", {
+                              dateStyle: "medium",
+                              timeZone: "UTC",
+                            }).format(transaction.occurredAt)}
+                          </time>
+                        </td>
+                        <td className="px-6 py-4 font-medium">
+                          <span>{transaction.description}</span>
+                          <span
+                            className={"mt-1 block text-xs font-normal " + tone}
+                          >
+                            {typeLabel}
+                          </span>
+                          {transaction.ownershipEstimated ? (
+                            <span className="mt-1 block text-xs font-normal text-amber-800">
+                              Divisão estimada com sua mãe
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-6 py-4 text-[var(--muted)]">
+                          {categoryType(transaction.type) === null ? (
+                            <span>Não se aplica</span>
+                          ) : (
+                            <form
+                              action={updateTransactionCategory.bind(
+                                null,
+                                transaction.id,
+                              )}
+                            >
+                              <input
+                                type="hidden"
+                                name="returnTo"
+                                value={returnTo}
+                              />
+                              <CategorySelect
+                                key={transaction.categoryId ?? "uncategorized"}
+                                description={transaction.description}
+                                categoryId={transaction.categoryId}
+                                categories={categories.filter(
+                                  (category) =>
+                                    category.type ===
+                                    categoryType(transaction.type),
+                                )}
+                              />
+                            </form>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-[var(--muted)]">
+                          {transaction.account.name}
+                        </td>
+                        <td
+                          className={
+                            "whitespace-nowrap px-6 py-4 text-right font-semibold " +
+                            tone
+                          }
+                        >
+                          {amountSign}{" "}
+                          {formatCurrencyFromCents(
+                            transaction.amountCents,
+                            transaction.account.currency,
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-3">
+                            <Link
+                              className="text-sm text-[var(--accent)] hover:underline"
+                              href={`/transacoes/${transaction.id}/editar`}
+                            >
+                              Editar
+                            </Link>
+                            <ConfirmDelete
+                              id={transaction.id}
+                              description={transaction.description}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {total > 0 ? (
+            <nav
+              aria-label="Paginação das transações"
+              className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-4"
+            >
+              {page > 1 ? (
+                <Link
+                  className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+                  href={pageHref(page - 1)}
+                >
+                  ← Anterior
+                </Link>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="px-4 text-sm text-[var(--muted)] opacity-50"
+                >
+                  ← Anterior
+                </span>
+              )}
+              <span className="text-sm text-[var(--muted)]">
+                Página {page} de {pageCount}
+              </span>
+              {page < pageCount ? (
+                <Link
+                  className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+                  href={pageHref(page + 1)}
+                >
+                  Próxima →
+                </Link>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="px-4 text-sm text-[var(--muted)] opacity-50"
+                >
+                  Próxima →
+                </span>
+              )}
+            </nav>
+          ) : null}{" "}
+        </div>
+      </section>
+    </PageShell>
   );
 }

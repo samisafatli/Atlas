@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { deleteCategory, saveCategory } from "./actions";
+import { PageShell } from "@/app/page-shell";
 
 const inputClass =
   "min-h-11 rounded-lg border border-[var(--line)] bg-white px-3";
@@ -27,7 +28,7 @@ export default async function CategoriesPage({
     uso: "Categoria em uso ou não encontrada. Reclassifique seus lançamentos e ajuste suas regras antes de excluir.",
   };
   return (
-    <main className="mx-auto min-h-screen max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="medium">
       <h1 className="mb-3 text-3xl font-medium">Categorias</h1>
 
       {query.erro ? (
@@ -144,6 +145,6 @@ export default async function CategoriesPage({
           </p>
         ) : null}
       </div>
-    </main>
+    </PageShell>
   );
 }

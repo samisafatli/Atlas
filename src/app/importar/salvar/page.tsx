@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SaveImportForm } from "../save-form";
+import { PageShell } from "@/app/page-shell";
 
 export const dynamic = "force-dynamic";
 
 export default async function SaveImportPage() {
   const accounts = await prisma.account.findMany({ orderBy: { name: "asc" } });
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+    <PageShell width="narrow">
       <Link className="text-sm text-[var(--muted)]" href="/importar">
         ← Prévia do arquivo
       </Link>
@@ -17,6 +18,6 @@ export default async function SaveImportPage() {
       ) : (
         <p role="alert">Cadastre uma conta antes de importar transações.</p>
       )}
-    </main>
+    </PageShell>
   );
 }
