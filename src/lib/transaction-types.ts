@@ -45,6 +45,18 @@ export function resultAmount(type: string, cents: bigint) {
 export function expenseAmount(type: string, cents: bigint) {
   return type === "EXPENSE" ? cents : type === "REFUND" ? -cents : 0n;
 }
+
+export function isDebitPurchaseRefund(description: string) {
+  const text = description
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+  return /^estorno\s*[-–—]\s*(?:ajuste de )?compra no debito(?:\b|$)/.test(
+    text,
+  );
+}
 export function transactionSign(type: string) {
   return type === "TRANSFER"
     ? "↔ "

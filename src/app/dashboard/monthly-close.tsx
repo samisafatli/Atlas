@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isApproximateMonth } from "@/lib/tracking-period";
 import { formatCents } from "@/lib/finance-format";
 import { expenseAmount } from "@/lib/transaction-types";
 
@@ -82,6 +83,12 @@ export function MonthlyClose({
           : `${savingsRate.toFixed(2).replace(".", ",")}%`}
       </p>
       <div className="mt-4 border-t border-[var(--line)] pt-4">
+        {isApproximateMonth(month) || isApproximateMonth(previousMonth) ? (
+          <p className="mb-3 rounded-lg bg-amber-50 p-3 text-sm">
+            Comparação aproximada: inclui histórico anterior a setembro de 2026,
+            ainda não integralmente revisado.
+          </p>
+        ) : null}
         <h3 className="text-sm font-medium">
           Principais categorias vs. mês anterior
         </h3>

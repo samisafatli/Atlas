@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isApproximateMonth } from "@/lib/tracking-period";
 import { prisma } from "@/lib/prisma";
 import { getMonthRange, shiftMonth } from "@/lib/finance-format";
 import { OverviewCards } from "./overview-cards";
@@ -119,6 +120,11 @@ export default async function DashboardPage({
           </div>
         </div>
         <OverviewCards income={incomeTotal} expenses={expenseTotal} />
+        <p className="mt-3 rounded-xl bg-amber-50 p-4 text-sm">
+          {isApproximateMonth(selectedMonth)
+            ? "Histórico aproximado: meses anteriores a setembro de 2026 não foram integralmente revisados."
+            : "Acompanhamento desde setembro de 2026. Os números dependem dos arquivos importados e da revisão dos lançamentos; o mês não é considerado completo automaticamente."}
+        </p>
         <p className="mt-4 text-sm text-[var(--muted)]">
           Cobranças/despesas: {formatCents(grossExpenses)} · Créditos/estornos:{" "}
           {formatCents(refunds)}. Pagamentos de fatura, transferências e

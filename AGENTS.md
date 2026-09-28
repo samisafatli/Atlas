@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Contexto do produto
+
+Leia `docs/CONTEXTO.md` antes de alterar regras financeiras ou dados. Preserve as decisões do usuário sobre escopo Nubank, dinheiro administrado para a mãe e histórico aproximado anterior a setembro/2026. Atualize esse documento quando novas decisões forem confirmadas.

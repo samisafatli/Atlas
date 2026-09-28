@@ -1317,6 +1317,124 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
     },
   );
+
+  await t.test(
+    "tracking review fixes debit refunds from September and preserves manual categories",
+    async () => {
+      const { bankTransactionType } = await import("../src/lib/nubank-csv.ts");
+      const { reviewTrackingStart } =
+        await import("../src/lib/review-tracking-start.ts");
+      const { transactionFingerprint } =
+        await import("../src/lib/transaction-fingerprint.ts");
+      const { isApproximateMonth } =
+        await import("../src/lib/tracking-period.ts");
+      assert.equal(isApproximateMonth("2026-08"), true);
+      assert.equal(isApproximateMonth("2026-09"), false);
+      assert.equal(
+        bankTransactionType("Estorno - Compra no débito", 100n),
+        "REFUND",
+      );
+      assert.equal(
+        bankTransactionType("Estorno — Ajuste de compra no débito", 100n),
+        "REFUND",
+      );
+      assert.equal(
+        bankTransactionType("Estorno - Compra no débito", -100n),
+        "EXPENSE",
+      );
+      assert.equal(bankTransactionType("Estorno de Pix", 100n), "INCOME");
+      const a = await prisma.account.create({
+        data: { name: "Tracking start test", type: "CHECKING" },
+      });
+      const manual = await prisma.category.create({
+        data: { name: "Manual review category", type: "EXPENSE" },
+      });
+      const candidates = [
+        {
+          description: "Estorno - Compra no débito",
+          type: "INCOME",
+          date: "2026-08-02",
+        },
+        {
+          description: "Estorno - Compra no débito",
+          type: "INCOME",
+          date: "2026-09-02",
+        },
+        {
+          description: "Compra no débito - Uber UBER *TRIP",
+          type: "EXPENSE",
+          date: "2026-09-03",
+        },
+        {
+          description: "Netflix.Com",
+          type: "EXPENSE",
+          date: "2026-09-04",
+          categoryId: manual.id,
+        },
+        { description: "Netflix.Com", type: "EXPENSE", date: "2026-08-04" },
+      ].map((r) => ({
+        ...r,
+        amountCents: "10000",
+        sourceType: "BANK_STATEMENT",
+        externalId: null,
+      }));
+      for (const r of candidates)
+        await prisma.transaction.create({
+          data: {
+            description: r.description,
+            type: r.type,
+            occurredAt: new Date(`${r.date}T12:00:00Z`),
+            amountCents: 10000n,
+            sourceType: r.sourceType,
+            accountId: a.id,
+            categoryId: r.categoryId ?? null,
+            fingerprint: transactionFingerprint({ ...r, accountId: a.id }),
+          },
+        });
+      const result = await reviewTrackingStart();
+      assert.equal(result.refunds, 1);
+      assert.ok(result.addedRules > 0);
+      assert.ok(
+        backup.parseBackup(
+          await readFile(join(directory, result.protectionFile), "utf8"),
+        ),
+      );
+      const stored = await prisma.transaction.findMany({
+        where: { accountId: a.id },
+        orderBy: { occurredAt: "asc" },
+        include: { category: true },
+      });
+      assert.equal(stored[0].type, "INCOME");
+      assert.equal(stored[1].categoryId, null);
+      assert.equal(stored[2].type, "REFUND");
+      assert.equal(stored[3].category.name, "Transporte");
+      assert.equal(stored[4].categoryId, manual.id);
+      const next = await reviewTrackingStart();
+      assert.equal(next.refunds, 0);
+      assert.equal(next.categorized, 0);
+      assert.equal(next.addedRules, 0);
+      assert.equal(
+        (
+          await countImportDuplicates(
+            candidates.map((r) => ({
+              ...r,
+              type: bankTransactionType(
+                r.description,
+                r.type === "INCOME" ? 10000n : -10000n,
+              ),
+            })),
+            a.id,
+          )
+        ).existing,
+        5,
+      );
+      assert.ok(
+        backup.parseBackup(
+          backup.backupJson(await backup.createBackupObject()),
+        ),
+      );
+    },
+  );
   console.info(
     `Isolated test database: ${pathToFileURL(join(directory, "finance.db")).href}`,
   );

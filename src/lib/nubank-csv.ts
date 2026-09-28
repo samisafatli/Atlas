@@ -1,6 +1,6 @@
 import { motherTransactionType } from "./personal-rules";
 import type { TransactionType } from "./transaction-types";
-import { rdbTransactionType } from "./transaction-types";
+import { rdbTransactionType, isDebitPurchaseRefund } from "./transaction-types";
 export type ImportSource = "CREDIT_CARD" | "BANK_STATEMENT";
 export const sourceLabels = {
   CREDIT_CARD: "Fatura de cartão",
@@ -58,6 +58,7 @@ export function bankTransactionType(
   description: string,
   amount: bigint,
 ): TransactionType {
+  if (amount > 0n && isDebitPurchaseRefund(description)) return "REFUND";
   const mother = motherTransactionType(description, amount < 0n);
   if (mother) return mother;
   const investment = rdbTransactionType(description, amount < 0n);

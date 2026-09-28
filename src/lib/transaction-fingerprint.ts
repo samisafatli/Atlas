@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { TransactionType } from "./transaction-types";
+import { isDebitPurchaseRefund } from "./transaction-types";
 
 export type FingerprintTransaction = {
   date: string;
@@ -51,6 +52,15 @@ export function transactionFingerprint(transaction: FingerprintTransaction) {
           : transaction.type,
   };
   const source = transaction.sourceType ?? "BANK_STATEMENT";
+  // Older bank imports called these credits INCOME. Keep their identity even
+  // when the parser correctly classifies them as REFUND, including old months.
+  if (
+    source === "BANK_STATEMENT" &&
+    transaction.type === "REFUND" &&
+    isDebitPurchaseRefund(transaction.description)
+  ) {
+    transaction = { ...transaction, type: "INCOME" };
+  }
   const identity = transaction.externalId
     ? [transaction.accountId, source, transaction.externalId]
     : [source, previousTransactionFingerprint(transaction)];
