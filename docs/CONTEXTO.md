@@ -45,7 +45,7 @@ O escopo é o Nubank: faturas do cartão e extratos da conta. Compras e parcelas
 
 - Conferir setembro com fatura e extrato completos; separar tipo errado (afeta indicadores) de categoria ausente (afeta distribuição).
 - Resolver somente ambiguidades confirmadas pelo usuário. Não classificar Pix por nome de pessoa ou intermediário de pagamentos sem contexto.
-- Melhorar indicação de cobertura de arquivos por mês; o aviso atual de importação ainda não certifica completude.
+- Melhorar indicação de cobertura de arquivos por mês; o aviso atual de importação ainda não certifica completude. Abril e junho/2026 parecem não ter fatura completa.
 - Regras pessoais configuráveis por pessoa antes de incluir a namorada.
 - Ao restaurar backups muito antigos, revisar compatibilidade: eles podem reintroduzir categorias antigas; migrar o esquema não reexecuta transformações de dados já aplicadas.
 - Registrar novas decisões aqui. Assistentes externos não têm acesso automático à conversa que originou essas regras.
@@ -54,7 +54,8 @@ O escopo é o Nubank: faturas do cartão e extratos da conta. Compras e parcelas
 
 - Instaladas 11 regras específicas para Uber Trip, Mundial (duas grafias), Netflix (duas grafias), Claude, Obramax, Sua Academia, Telefônica/Vivo (duas grafias) e metrô. Três lançamentos desde setembro receberam categoria; nenhuma categoria já atribuída foi substituída.
 - O parser compartilhado por CSV de extrato e OFX agora reconhece créditos explicitamente descritos como estorno de compra no débito (inclusive ajuste). Na base revisada não havia correções desse tipo a aplicar desde setembro. Casos anteriores ficaram intactos por decisão de escopo.
-- Dashboard distingue histórico aproximado de período em acompanhamento, e alerta sobre comparações envolvendo meses anteriores ao marco.
-- Setembro tinha 123 lançamentos, com fatura e extrato e última data registrada em 27/09. Havia 25 lançamentos categorizáveis sem categoria e duas atribuições de propriedade estimadas. Esses números são uma fotografia e devem ser consultados novamente no banco.
-- Principais pendências de setembro: identificar COMFY, PJBANK e Luis Eduardo; distinguir as três contas de gás (CEG/Companhia Distribuidora) entre o usuário e a mãe. Nomes e valores isolados não permitem resolver essas pendências automaticamente.
+- O dashboard chegou a distinguir histórico aproximado de período em acompanhamento, mas esses avisos foram removidos depois a pedido do usuário. `isApproximateMonth` (`src/lib/tracking-period.ts`) está sem uso na interface; `TRACKING_START_DATE` segue usado pela revisão de setembro.
+- Setembro tinha 123 lançamentos, com fatura e extrato e última data registrada em 27/09. Na revisão havia 25 lançamentos categorizáveis sem categoria e duas atribuições de propriedade estimadas. Em consulta posterior no mesmo dia, nenhum lançamento categorizável desde setembro estava sem categoria e havia uma estimativa de propriedade desde setembro (dez no total). Esses números são fotografias e devem ser consultados novamente no banco.
+- Pendências de setembro: identificar COMFY, PJBANK e Luis Eduardo; distinguir as três contas de gás (CEG/Companhia Distribuidora) entre o usuário e a mãe. Esses lançamentos já têm categoria e tipo despesa, mas não há decisão registrada aqui que os confirme. Nomes e valores isolados não permitem resolvê-los automaticamente.
+- Cobertura do histórico aproximado: abril/2026 não tem lançamentos de cartão e junho/2026 tem apenas seis, o que sugere faturas ausentes. Outubro e novembro têm só as parcelas futuras de uma compra Mercado Livre, trazidas pela fatura. Comparações com esses meses são pouco confiáveis.
 - Os testes de importação/reimportação, classificação limitada ao período e preservação de categorias manuais passaram; isso não substitui a conferência do mês com o usuário.

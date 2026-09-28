@@ -4,10 +4,15 @@ Aplicativo financeiro pessoal local-first com transações manuais, importação
 Nubank CSV, categorias e regras, dashboard mensal, identificação de recorrências,
 histórico patrimonial e backup/restauração em JSON.
 
-O resultado acumulado no dashboard soma receitas menos despesas líquidas até o
-fim do mês selecionado. Créditos/estornos reduzem despesas; transferências e
-pagamentos de fatura ficam fora do resultado. Isso não é saldo bancário:
-não inclui saldo inicial, contas patrimoniais nem movimentações ausentes.
+O resultado do período no dashboard é receitas menos despesas líquidas do mês
+selecionado. Créditos/estornos reduzem despesas; transferências, pagamentos de
+fatura, movimentos RDB e valores administrados para a mãe ficam fora do
+resultado. Isso não é saldo bancário: não inclui saldo inicial, contas
+patrimoniais nem movimentações ausentes.
+
+Decisões financeiras pessoais (classificações por pessoa, marco de
+acompanhamento em setembro/2026 e estimativas) estão em
+[`docs/CONTEXTO.md`](docs/CONTEXTO.md).
 
 ## Fatura e extrato da conta
 
@@ -40,7 +45,9 @@ arquivo mantém seu registro no histórico; qualquer falha cancela o lote inteir
   pagamento de fatura, sem efeito no resultado.
 - **Conta:** colunas `Data,Valor,Descrição` e, quando disponível, `Identificador`.
   Débito/Pix enviados são despesas; valores recebidos são receitas. Descrições
-  explícitas de pagamento de fatura são transferências. Revise Pix entre suas
+  explícitas de pagamento de fatura são transferências e estornos de compra no
+  débito são créditos/estornos. Algumas descrições do extrato seguem regras
+  pessoais fixas (`src/lib/personal-rules.ts`), descritas em `docs/CONTEXTO.md`. Revise Pix entre suas
   próprias contas e reembolsos em **Transações → Editar → Tipo**: o texto sozinho
   não comprova quem é o titular da outra conta.
 - Importe os dois arquivos para cobrir crédito e débito. O preview mostra a
@@ -122,11 +129,14 @@ redirect/cache do Next.js; a persistência usa o Prisma e o SQLite reais.
 
 ```text
 src/
-  app/        Rotas, layout e estilos globais
-  lib/        Acesso server-side ao banco
+  app/        Rotas, telas, server actions e API de backup
+  lib/        Banco, importação, deduplicação, regras e backup
 prisma/
   migrations/ Histórico versionado do esquema
   schema.prisma
+scripts/      Manutenções explícitas (reparos e revisão de setembro)
+tests/        Testes com SQLite temporário
+docs/         Contexto e decisões financeiras
 ```
 
 ## Banco local
