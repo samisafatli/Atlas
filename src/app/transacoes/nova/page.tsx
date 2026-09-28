@@ -2,8 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TransactionForm } from "../form";
 
-export const metadata = { title: "Nova transação — Atlas" };
-
 export default async function NewTransactionPage({
   searchParams,
 }: {

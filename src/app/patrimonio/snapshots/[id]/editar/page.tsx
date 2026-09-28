@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AssetSnapshotForm } from "../../../snapshot-form";
 
-export const metadata = { title: "Editar snapshot — Atlas" };
-
 export default async function EditSnapshotPage({
   params,
 }: {

@@ -3,8 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { sourceLabels } from "@/lib/nubank-csv";
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Histórico de importações — Atlas" };
-
 export default async function ImportHistoryPage() {
   const imports = await prisma.import.findMany({
     orderBy: { importedAt: "desc" },

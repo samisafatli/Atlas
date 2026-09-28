@@ -45,10 +45,6 @@ export function SpendingCalendar({
         <h2 className="font-medium" id="calendar-title">
           Gastos por dia
         </h2>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          Despesas líquidas por dia. Créditos abatem gastos; valores negativos
-          indicam mais créditos do que cobranças.
-        </p>
       </div>
       <div className="grid grid-cols-7 gap-1.5">
         {weekdays.map((day) => (
@@ -104,10 +100,6 @@ export function SpendingCalendar({
           );
         })}
       </div>
-      <p className="mt-4 text-xs text-[var(--muted)]">
-        Tom neutro indica valor líquido zero ou crédito líquido; tons mais
-        escuros indicam maior despesa líquida.
-      </p>
     </section>
   );
 }

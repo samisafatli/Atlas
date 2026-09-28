@@ -15,8 +15,6 @@ const assetTypeLabels: Record<string, string> = {
   OTHER: "Outros",
 };
 
-export const metadata = { title: "Patrimônio — Atlas" };
-
 export default async function AssetsPage({
   searchParams,
 }: {
@@ -43,10 +41,7 @@ export default async function AssetsPage({
     <main className="mx-auto min-h-screen max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
       <section>
         <h1 className="text-3xl font-medium">Patrimônio</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-          Cadastre ativos e registre snapshots mensais. Os valores históricos só
-          mudam quando você edita explicitamente um snapshot.
-        </p>
+
         {query.erro ? (
           <p
             className="my-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800"

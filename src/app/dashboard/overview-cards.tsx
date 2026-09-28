@@ -30,12 +30,6 @@ export function OverviewCards({
           >
             {formatCents(card.amount)}
           </p>
-          {card.label === "Resultado do período" ? (
-            <p className="mt-2 text-xs text-[var(--muted)]">
-              Receitas menos despesas líquidas do mês. Não é saldo bancário nem
-              dinheiro disponível.
-            </p>
-          ) : null}
         </article>
       ))}
     </div>

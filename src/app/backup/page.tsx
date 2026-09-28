@@ -1,8 +1,6 @@
 import { RestoreForm } from "./restore-form";
 import { ClearForm } from "./clear-form";
 
-export const metadata = { title: "Backup e restauração — Atlas" };
-
 export default function BackupPage() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
@@ -11,9 +9,7 @@ export default function BackupPage() {
         <article className="rounded-2xl border border-[var(--line)] bg-white/80 p-5">
           <h2 className="font-medium">Exportar seus dados</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Gera um arquivo JSON completo com transações, categorias, contas,
-            regras de categoria, histórico de importações e snapshots
-            patrimoniais.
+            Exporte todos os seus dados em um arquivo JSON.
           </p>
           <a
             className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
@@ -21,18 +17,12 @@ export default function BackupPage() {
           >
             Baixar backup JSON
           </a>
-          <p className="mt-3 text-xs text-[var(--muted)]">
-            O navegador salva o arquivo na pasta configurada para downloads.
-          </p>
         </article>
         <article className="rounded-2xl border border-[var(--line)] bg-white/80 p-5">
           <h2 className="mb-2 font-medium">Restaurar um backup</h2>
           <p className="mb-4 text-sm leading-6 text-[var(--muted)]">
-            Use um JSON exportado pelo Atlas para voltar ao estado salvo naquele
-            arquivo, incluindo transações, regras e patrimônio. A restauração
-            substitui todos os dados atuais; não mescla registros. Lançamentos
-            criados depois do backup deixarão de aparecer. CSVs do banco não são
-            backups do Atlas e devem ser enviados em Importar CSV.
+            Restaure um arquivo JSON do Atlas. Todos os dados atuais serão
+            substituídos pelos dados do backup.
           </p>
           <p className="mb-4 text-sm leading-6 text-[var(--muted)]">
             O arquivo é validado antes da restauração. O Atlas pede confirmação

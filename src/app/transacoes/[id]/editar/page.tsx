@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { TransactionForm } from "../../form";
 
-export const metadata = { title: "Editar transação — Atlas" };
-
 export default async function EditTransactionPage({
   params,
   searchParams,

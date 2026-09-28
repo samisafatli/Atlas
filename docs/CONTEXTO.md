@@ -5,6 +5,8 @@ Ele registra decisões do usuário, não substitui a inspeção do código e do 
 
 ## Objetivo e período
 
+Preferência de interface: manter telas concisas, sem blocos didáticos sobre regras internas ou avisos financeiros repetidos. As explicações ficam nesta documentação. Preservar mensagens de erro, estados vazios, indicações específicas de estimativa e consequências de ações destrutivas. Os avisos extensos de acompanhamento/histórico no dashboard foram removidos a pedido do usuário; o marco de setembro continua válido para regras e revisões de dados.
+
 Aplicativo pessoal, inicialmente para o proprietário e futuramente sua namorada; não é um SaaS.
 O acompanhamento deliberado começa em **setembro/2026**. Meses anteriores são histórico aproximado e não precisam ficar perfeitamente classificados. Não confundir essa data com certificação de que setembro ou meses seguintes estão completos.
 

@@ -3,7 +3,7 @@ import "./globals.css";
 import { AppHeader } from "./app-header";
 
 export const metadata: Metadata = {
-  title: "Atlas — Finanças pessoais",
+  title: "Atlas",
   description: "Um espaço simples para cuidar das suas finanças pessoais.",
 };
 

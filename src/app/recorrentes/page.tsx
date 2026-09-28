@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { formatCents } from "@/lib/finance-format";
 import { detectRecurringExpenses } from "./recurrence";
 
-export const metadata = { title: "Gastos recorrentes — Atlas" };
 export const dynamic = "force-dynamic";
 
 export default async function RecurringPage() {
@@ -32,9 +31,7 @@ export default async function RecurringPage() {
     <main className="mx-auto min-h-screen max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
       <h1 className="text-3xl font-medium">Gastos recorrentes</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-        Estimativas explicáveis com base em pelo menos três despesas parecidas,
-        intervalos mensais e valores próximos nos últimos 12 meses. Nenhuma
-        transação é alterada.
+        Estimativas mensais com base nos últimos 12 meses.
       </p>
       {recurring.length ? (
         <div className="mt-7 grid gap-4">

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { isApproximateMonth } from "@/lib/tracking-period";
 import { prisma } from "@/lib/prisma";
 import { getMonthRange, shiftMonth } from "@/lib/finance-format";
 import { OverviewCards } from "./overview-cards";
@@ -8,10 +7,8 @@ import { CategoryBreakdown } from "./category-breakdown";
 import { RecentTransactions } from "./recent-transactions";
 import { MonthlyClose } from "./monthly-close";
 import { expenseAmount } from "@/lib/transaction-types";
-import { formatCents } from "@/lib/finance-format";
 
 export const metadata = {
-  title: "Dashboard — Atlas",
   description: "Resumo mensal das finanças pessoais.",
 };
 
@@ -76,12 +73,6 @@ export default async function DashboardPage({
       ...item,
       amountCents: expenseAmount(item.type, item.amountCents),
     }));
-  const grossExpenses = transactions
-    .filter((item) => item.type === "EXPENSE")
-    .reduce((sum, item) => sum + item.amountCents, 0n);
-  const refunds = transactions
-    .filter((item) => item.type === "REFUND")
-    .reduce((sum, item) => sum + item.amountCents, 0n);
   const incomeTotal = incomes.reduce((sum, item) => sum + item.amountCents, 0n);
   const expenseTotal = expenses.reduce(
     (sum, item) => sum + item.amountCents,
@@ -120,32 +111,6 @@ export default async function DashboardPage({
           </div>
         </div>
         <OverviewCards income={incomeTotal} expenses={expenseTotal} />
-        <p className="mt-3 rounded-xl bg-amber-50 p-4 text-sm">
-          {isApproximateMonth(selectedMonth)
-            ? "Histórico aproximado: meses anteriores a setembro de 2026 não foram integralmente revisados."
-            : "Acompanhamento desde setembro de 2026. Os números dependem dos arquivos importados e da revisão dos lançamentos; o mês não é considerado completo automaticamente."}
-        </p>
-        <p className="mt-4 text-sm text-[var(--muted)]">
-          Cobranças/despesas: {formatCents(grossExpenses)} · Créditos/estornos:{" "}
-          {formatCents(refunds)}. Pagamentos de fatura, transferências e
-          movimentos de investimento e valores da sua mãe ficam fora do
-          resultado.
-        </p>
-        <p className="mt-3 text-sm text-[var(--muted)]">
-          Receitas incluem o salário líquido repassado da Caixa. Contas pagas
-          fora do Nubank não estão incluídas. Acertos pessoais e contas de
-          Light/Naturgy ainda precisam de revisão; divisões históricas estão
-          marcadas como estimadas.
-        </p>
-        {transactions.some((item) => item.sourceType === "CREDIT_CARD") ? (
-          <p className="mt-3 rounded-xl bg-amber-50 p-4 text-sm">
-            Este período contém fatura de cartão. Compras e parcelas usam a data
-            do CSV; a fatura não informa suas receitas, Pix nem compras no
-            débito. Importe também o extrato da conta e revise transferências
-            entre contas próprias. Resultado não é saldo bancário nem valor da
-            fatura a pagar.
-          </p>
-        ) : null}
         {!transactions.length ? (
           <p className="mt-4 rounded-xl border border-[var(--line)] bg-white/60 p-4 text-sm text-[var(--muted)]">
             Nenhuma transação registrada neste mês. Importe um CSV ou cadastre

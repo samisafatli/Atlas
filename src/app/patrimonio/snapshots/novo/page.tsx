@@ -2,8 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { AssetSnapshotForm } from "../../snapshot-form";
 
-export const metadata = { title: "Novo snapshot — Atlas" };
-
 export default async function NewSnapshotPage() {
   const accounts = await prisma.assetAccount.findMany({
     orderBy: [{ institution: "asc" }, { name: "asc" }],

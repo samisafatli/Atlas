@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { deleteCategory, saveCategory } from "./actions";
 
-export const metadata = { title: "Categorias — Atlas" };
 const inputClass =
   "min-h-11 rounded-lg border border-[var(--line)] bg-white px-3";
 const buttonClass =
@@ -30,11 +29,7 @@ export default async function CategoriesPage({
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
       <h1 className="mb-3 text-3xl font-medium">Categorias</h1>
-      <p className="mb-6 text-sm text-[var(--muted)]">
-        Organize suas receitas e despesas. Renomear atualiza o nome em todo o
-        histórico, preservando os valores. Créditos e reembolsos usam categorias
-        de despesa.
-      </p>
+
       {query.erro ? (
         <p
           role="alert"

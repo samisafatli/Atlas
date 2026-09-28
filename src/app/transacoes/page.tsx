@@ -12,7 +12,6 @@ import {
 import { updateTransactionCategory } from "./actions";
 
 export const metadata = {
-  title: "Transações — Atlas",
   description: "Consulte as transações registradas no Atlas.",
 };
 
@@ -247,21 +246,13 @@ export default async function TransactionsPage({
       <div className="mx-auto max-w-6xl">
         <section aria-labelledby="transactions-title">
           <div className="mb-8">
-            <p className="mb-3 text-sm text-[var(--muted)]">
-              Seu histórico financeiro
-            </p>
             <h1
               className="text-3xl font-medium tracking-tight sm:text-4xl"
               id="transactions-title"
             >
               Transações
             </h1>
-            <p className="mt-3 text-sm text-[var(--muted)]">
-              Pagamentos de fatura e transferências não entram no resultado.
-              Para ajustar um Pix entre contas próprias ou um reembolso, use
-              Editar → Tipo; mudar apenas a categoria não altera a natureza do
-              lançamento.
-            </p>
+
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 className="inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"

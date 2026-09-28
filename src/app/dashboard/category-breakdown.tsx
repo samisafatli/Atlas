@@ -95,10 +95,6 @@ export function CategoryBreakdown({
           Sem despesas neste mês.
         </p>
       )}
-      <p className="mt-4 text-xs text-[var(--muted)]">
-        Créditos reduzem a categoria atribuída. Revise créditos sem categoria;
-        percentuais podem ser negativos ou superar 100% quando há abatimentos.
-      </p>
     </section>
   );
 }

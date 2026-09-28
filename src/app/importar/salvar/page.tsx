@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SaveImportForm } from "../save-form";
 
-export const metadata = { title: "Salvar importação — Atlas" };
 export const dynamic = "force-dynamic";
 
 export default async function SaveImportPage() {
