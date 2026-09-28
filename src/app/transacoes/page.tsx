@@ -5,6 +5,7 @@ import { ConfirmDelete } from "./confirm-delete";
 import { CategorySelect } from "./category-select";
 import {
   categoryType,
+  transactionTypes,
   typeLabels,
   transactionSign,
 } from "@/lib/transaction-types";
@@ -203,6 +204,17 @@ export default async function TransactionsPage({
     ...(type ? { type } : {}),
     ...(categoryId
       ? { categoryId: categoryId === "uncategorized" ? null : categoryId }
+      : {}),
+    ...(categoryId === "uncategorized"
+      ? {
+          AND: {
+            type: {
+              in: transactionTypes.filter(
+                (value) => categoryType(value) !== null,
+              ),
+            },
+          },
+        }
       : {}),
     ...(importId ? { importId } : {}),
   };
