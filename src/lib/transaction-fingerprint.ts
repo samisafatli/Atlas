@@ -9,6 +9,7 @@ export type FingerprintTransaction = {
   type: TransactionType;
   sourceType?: string;
   externalId?: string | null;
+  occurrence?: number;
 };
 
 export function legacyTransactionFingerprint(
@@ -53,5 +54,22 @@ export function transactionFingerprint(transaction: FingerprintTransaction) {
   const identity = transaction.externalId
     ? [transaction.accountId, source, transaction.externalId]
     : [source, previousTransactionFingerprint(transaction)];
-  return `v3:${createHash("sha256").update(JSON.stringify(identity)).digest("hex")}`;
+  const base = `v3:${createHash("sha256").update(JSON.stringify(identity)).digest("hex")}`;
+  return !transaction.externalId && (transaction.occurrence ?? 1) > 1
+    ? `${base}:occ:${transaction.occurrence}`
+    : base;
+}
+
+// Number indistinguishable rows within each file, never across files in a batch.
+// The first occurrence retains the existing fingerprint for older imports.
+export function withImportOccurrences<T extends FingerprintTransaction>(
+  rows: T[],
+) {
+  const counts = new Map<string, number>();
+  return rows.map((row) => {
+    const base = transactionFingerprint({ ...row, occurrence: 1 });
+    const occurrence = row.externalId ? 1 : (counts.get(base) ?? 0) + 1;
+    counts.set(base, occurrence);
+    return { ...row, occurrence };
+  });
 }

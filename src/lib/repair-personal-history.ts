@@ -98,6 +98,9 @@ export async function repairPersonalHistory() {
               sourceType: row.sourceType,
               externalId: row.externalId,
               type,
+              occurrence: Number(
+                row.fingerprint.match(/:occ:(\d+)$/)?.[1] ?? 1,
+              ),
             })
           : null;
         const result = await tx.transaction.updateMany({

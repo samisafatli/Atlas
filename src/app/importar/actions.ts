@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { transactionFingerprint } from "@/lib/transaction-fingerprint";
+import {
+  transactionFingerprint,
+  withImportOccurrences,
+} from "@/lib/transaction-fingerprint";
 import { existingImportFingerprints } from "@/lib/import-deduplication";
 import { matchCategoryRule, sortCategoryRules } from "@/lib/category-rules";
 import type { ImportedTransaction } from "@/lib/nubank-csv";
@@ -89,7 +92,13 @@ export async function saveNubankImport(formData: FormData) {
       }),
     );
     await prisma.$transaction(async (tx) => {
-      const rows = files.flatMap((file) => file.transactions);
+      const importFiles = files.map((file) => ({
+        ...file,
+        transactions: withImportOccurrences(
+          file.transactions.map((row) => ({ ...row, accountId })),
+        ),
+      }));
+      const rows = importFiles.flatMap((file) => file.transactions);
       const salaryIds = new Map<string, string>();
       for (const name of new Set(
         rows
@@ -110,7 +119,7 @@ export async function saveNubankImport(formData: FormData) {
         rows.map((row) => ({ ...row, accountId })),
       );
       const seen = new Set(fingerprints);
-      for (const file of files) {
+      for (const file of importFiles) {
         const toCreate = file.transactions
           .map((row) => ({
             row,

@@ -239,8 +239,8 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
         [legacy, opposite, opposite],
         account.id,
       );
-      assert.equal(counts.existing, 2);
-      assert.equal(counts.newCount, 1);
+      assert.equal(counts.existing, 1);
+      assert.equal(counts.newCount, 2);
       await redirected(
         () =>
           saveNubankImport(
@@ -1112,6 +1112,105 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
           })
         ).category.name,
         "Salário PJ — Monety",
+      );
+    },
+  );
+
+  await t.test(
+    "identical purchases preserve multiplicity across reimports and overlapping files",
+    async () => {
+      const a = await prisma.account.create({
+        data: { name: "Identical purchases", type: "CHECKING" },
+      });
+      const row = parseNubankCsv("date,title,amount\n2026-09-01,Café,10.00")[0];
+      const save = (files) =>
+        saveNubankImport(
+          form({
+            accountId: a.id,
+            files: JSON.stringify(
+              files.map((transactions, i) => ({
+                filename: `file-${i}.csv`,
+                transactions,
+              })),
+            ),
+          }),
+        );
+      const pair = [row, { ...row }];
+      assert.equal(
+        (await countImportDuplicates([pair, pair], a.id)).newCount,
+        2,
+      );
+      await redirected(() => save([pair, pair]), "quantidade=2&duplicadas=2");
+      assert.equal((await countImportDuplicates(pair, a.id)).existing, 2);
+      await redirected(() => save([pair]), "quantidade=0&duplicadas=2");
+      const triple = [...pair, { ...row }];
+      assert.equal(
+        (await countImportDuplicates([triple, pair], a.id)).newCount,
+        1,
+      );
+      await redirected(() => save([triple, pair]), "quantidade=1&duplicadas=4");
+      await redirected(() => save([[row]]), "quantidade=0&duplicadas=1");
+      assert.equal(
+        await prisma.transaction.count({ where: { accountId: a.id } }),
+        3,
+      );
+      const contents = backup.parseBackup(
+        backup.backupJson(await backup.createBackupObject()),
+      );
+      assert.ok(contents);
+      await backup.restoreBackup(contents);
+      assert.equal((await countImportDuplicates(triple, a.id)).existing, 3);
+      const oldAccount = await prisma.account.create({
+        data: { name: "Old identical purchases", type: "CHECKING" },
+      });
+      const { transactionFingerprint } =
+        await import("../src/lib/transaction-fingerprint.ts");
+      await prisma.transaction.create({
+        data: {
+          description: row.description,
+          type: row.type,
+          amountCents: 1000n,
+          occurredAt: new Date(`${row.date}T12:00:00Z`),
+          sourceType: row.sourceType,
+          accountId: oldAccount.id,
+          fingerprint: transactionFingerprint({
+            ...row,
+            accountId: oldAccount.id,
+          }),
+        },
+      });
+      assert.equal(
+        (await countImportDuplicates(pair, oldAccount.id)).newCount,
+        1,
+      );
+      await redirected(
+        () =>
+          saveNubankImport(
+            form({
+              accountId: oldAccount.id,
+              filename: "old.csv",
+              transactions: JSON.stringify(pair),
+            }),
+          ),
+        "quantidade=1&duplicadas=1",
+      );
+      const bank = {
+        ...row,
+        sourceType: "BANK_STATEMENT",
+        externalId: "same-bank-id",
+      };
+      assert.equal(
+        (await countImportDuplicates([bank, bank], a.id)).newCount,
+        1,
+      );
+      assert.equal(
+        (
+          await countImportDuplicates(
+            [bank, { ...bank, externalId: "different-bank-id" }],
+            a.id,
+          )
+        ).newCount,
+        2,
       );
     },
   );

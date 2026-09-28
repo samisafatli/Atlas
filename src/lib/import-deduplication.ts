@@ -18,6 +18,7 @@ export async function existingImportFingerprints(
     previous: previousTransactionFingerprint(candidate),
     source: candidate.sourceType ?? "BANK_STATEMENT",
     type: candidate.type,
+    occurrence: candidate.occurrence ?? 1,
   }));
   const keys = [
     ...new Set(
@@ -38,7 +39,8 @@ export async function existingImportFingerprints(
       .filter(
         (item) =>
           stored.has(item.current) ||
-          (item.source === "BANK_STATEMENT" &&
+          (item.occurrence === 1 &&
+            item.source === "BANK_STATEMENT" &&
             [item.legacy, item.previous].some((key) => {
               const row = stored.get(key);
               return (

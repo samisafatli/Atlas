@@ -3,7 +3,10 @@
 import { salaryCategory } from "@/lib/personal-rules";
 
 import { prisma } from "@/lib/prisma";
-import { transactionFingerprint } from "@/lib/transaction-fingerprint";
+import {
+  transactionFingerprint,
+  withImportOccurrences,
+} from "@/lib/transaction-fingerprint";
 import { existingImportFingerprints } from "@/lib/import-deduplication";
 import { matchCategoryRule, sortCategoryRules } from "@/lib/category-rules";
 import type { ImportedTransaction } from "@/lib/nubank-csv";
@@ -12,9 +15,15 @@ import { categoryType } from "@/lib/transaction-types";
 type Candidate = ImportedTransaction;
 
 export async function countImportDuplicates(
-  transactions: Candidate[],
+  input: Candidate[] | Candidate[][],
   accountId: string,
 ) {
+  const files: Candidate[][] = Array.isArray(input[0])
+    ? (input as Candidate[][])
+    : [input as Candidate[]];
+  const transactions = files.flatMap((rows) =>
+    withImportOccurrences(rows.map((row) => ({ ...row, accountId }))),
+  );
   if (!accountId || transactions.length > 50000)
     return {
       existing: 0,

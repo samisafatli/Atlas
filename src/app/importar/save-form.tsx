@@ -72,7 +72,7 @@ export function SaveImportForm({
     let active = true;
     const timer = window.setTimeout(() => {
       void countImportDuplicates(
-        preview.flatMap((file) => file.transactions),
+        preview.map((file) => file.transactions),
         accountId,
       ).then(
         (result) => {
@@ -108,6 +108,12 @@ export function SaveImportForm({
       action={saveNubankImport}
       className="grid gap-5 rounded-2xl border border-[var(--line)] bg-white/80 p-5"
     >
+      <p className="text-sm text-[var(--muted)]">
+        Sem identificador bancário, lançamentos iguais são contados por arquivo.
+        Na reimportação, apenas ocorrências adicionais são incluídas. Prefira
+        arquivos completos do período: recortes separados com compras idênticas
+        podem ser confundidos com lançamentos já importados.
+      </p>
       <input type="hidden" name="files" value={JSON.stringify(preview)} />
       <p className="text-sm">
         {preview.length} arquivos para importar na conta selecionada. Se forem

@@ -174,11 +174,11 @@ export default async function TransactionsPage({
   const categories = await prisma.category.findMany({
     orderBy: [{ type: "asc" }, { name: "asc" }],
   });
-  const categoryId = categories.some(
-    (category) => category.id === requestedCategory,
-  )
-    ? requestedCategory
-    : "";
+  const categoryId =
+    requestedCategory === "uncategorized" ||
+    categories.some((category) => category.id === requestedCategory)
+      ? requestedCategory
+      : "";
   const validImport = requestedImportId
     ? await prisma.import.findUnique({
         where: { id: requestedImportId },
@@ -201,7 +201,9 @@ export default async function TransactionsPage({
         ? { occurredAt: monthRange ?? yearRange }
         : {}),
     ...(type ? { type } : {}),
-    ...(categoryId ? { categoryId } : {}),
+    ...(categoryId
+      ? { categoryId: categoryId === "uncategorized" ? null : categoryId }
+      : {}),
     ...(importId ? { importId } : {}),
   };
   const pageSize = 20;
@@ -353,6 +355,7 @@ export default async function TransactionsPage({
                 defaultValue={categoryId}
               >
                 <option value="">Todas</option>
+                <option value="uncategorized">Sem categoria</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -482,28 +485,34 @@ export default async function TransactionsPage({
                             </span>
                           </td>
                           <td className="px-6 py-4 text-[var(--muted)]">
-                            <form
-                              action={updateTransactionCategory.bind(
-                                null,
-                                transaction.id,
-                              )}
-                            >
-                              <input
-                                type="hidden"
-                                name="returnTo"
-                                value={returnTo}
-                              />
-                              <CategorySelect
-                                key={transaction.categoryId ?? "uncategorized"}
-                                description={transaction.description}
-                                categoryId={transaction.categoryId}
-                                categories={categories.filter(
-                                  (category) =>
-                                    category.type ===
-                                    categoryType(transaction.type),
+                            {categoryType(transaction.type) === null ? (
+                              <span>Não se aplica</span>
+                            ) : (
+                              <form
+                                action={updateTransactionCategory.bind(
+                                  null,
+                                  transaction.id,
                                 )}
-                              />
-                            </form>
+                              >
+                                <input
+                                  type="hidden"
+                                  name="returnTo"
+                                  value={returnTo}
+                                />
+                                <CategorySelect
+                                  key={
+                                    transaction.categoryId ?? "uncategorized"
+                                  }
+                                  description={transaction.description}
+                                  categoryId={transaction.categoryId}
+                                  categories={categories.filter(
+                                    (category) =>
+                                      category.type ===
+                                      categoryType(transaction.type),
+                                  )}
+                                />
+                              </form>
+                            )}
                           </td>
                           <td className="px-6 py-4 text-[var(--muted)]">
                             {transaction.account.name}
