@@ -1435,6 +1435,25 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
     },
   );
+  await t.test("month coverage reports imported sources and days", async () => {
+    const { monthCoverage } = await import("../src/lib/import-coverage.ts");
+    const row = (date, sourceType) => ({
+      occurredAt: new Date(`${date}T12:00:00Z`),
+      sourceType,
+    });
+    assert.deepEqual(
+      monthCoverage([
+        row("2026-09-27", "CREDIT_CARD"),
+        row("2026-09-01", "CREDIT_CARD"),
+        row("2026-09-10", "CREDIT_CARD"),
+        row("2026-09-05", "MANUAL"),
+      ]),
+      {
+        CREDIT_CARD: { count: 3, firstDay: 1, lastDay: 27 },
+        BANK_STATEMENT: null,
+      },
+    );
+  });
   console.info(
     `Isolated test database: ${pathToFileURL(join(directory, "finance.db")).href}`,
   );

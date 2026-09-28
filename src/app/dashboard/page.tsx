@@ -6,6 +6,7 @@ import { SpendingCalendar } from "./spending-calendar";
 import { CategoryBreakdown } from "./category-breakdown";
 import { RecentTransactions } from "./recent-transactions";
 import { MonthlyClose } from "./monthly-close";
+import { ImportCoverage } from "./import-coverage";
 import { expenseAmount } from "@/lib/transaction-types";
 import { PageShell } from "@/app/page-shell";
 
@@ -111,6 +112,9 @@ export default async function DashboardPage({
             </Link>
           </div>
         </div>
+        {transactions.length ? (
+          <ImportCoverage transactions={transactions} />
+        ) : null}
         <OverviewCards income={incomeTotal} expenses={expenseTotal} />
         {!transactions.length ? (
           <p className="mt-4 rounded-xl border border-[var(--line)] bg-white/60 p-4 text-sm text-[var(--muted)]">
