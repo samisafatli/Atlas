@@ -7,6 +7,7 @@ const links = [
   ["/dashboard", "Dashboard"],
   ["/transacoes", "Transações"],
   ["/importar", "Importar arquivos"],
+  ["/categorias", "Categorias"],
   ["/regras", "Regras"],
   ["/recorrentes", "Recorrentes"],
   ["/patrimonio", "Patrimônio"],

@@ -1227,6 +1227,96 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
     },
   );
+
+  await t.test(
+    "category management preserves references and rejects unsafe deletes",
+    async () => {
+      const { saveCategory, deleteCategory } =
+        await import("../src/app/categorias/actions.ts");
+      await redirected(
+        () => saveCategory(form({ name: "   ", type: "EXPENSE" })),
+        "erro=dados",
+      );
+      await redirected(
+        () => saveCategory(form({ name: "Categoria CRUD", type: "EXPENSE" })),
+        "sucesso=salva",
+      );
+      const category = await prisma.category.findUnique({
+        where: { name_type: { name: "Categoria CRUD", type: "EXPENSE" } },
+      });
+      await redirected(
+        () => saveCategory(form({ name: "categoria crud", type: "EXPENSE" })),
+        "erro=duplicada",
+      );
+      await redirected(
+        () =>
+          saveCategory(
+            form({ id: category.id, name: "Outra", type: "INCOME" }),
+          ),
+        "erro=dados",
+      );
+      const rule = await prisma.categoryRule.create({
+        data: { contains: "CRUD", categoryId: category.id },
+      });
+      await redirected(
+        () => deleteCategory(form({ id: category.id, confirm: "on" })),
+        "erro=uso",
+      );
+      await redirected(
+        () =>
+          saveCategory(
+            form({
+              id: category.id,
+              name: "Categoria renomeada",
+              type: "EXPENSE",
+            }),
+          ),
+        "sucesso=salva",
+      );
+      assert.equal(
+        (
+          await prisma.categoryRule.findUnique({
+            where: { id: rule.id },
+            include: { category: true },
+          })
+        ).category.name,
+        "Categoria renomeada",
+      );
+      await prisma.categoryRule.delete({ where: { id: rule.id } });
+      const row = await prisma.transaction.create({
+        data: {
+          description: "Categoria CRUD",
+          amountCents: 100n,
+          type: "EXPENSE",
+          occurredAt: new Date("2026-09-01"),
+          accountId: account.id,
+          categoryId: category.id,
+        },
+      });
+      await redirected(
+        () => deleteCategory(form({ id: category.id, confirm: "on" })),
+        "erro=uso",
+      );
+      assert.equal(
+        (await prisma.transaction.findUnique({ where: { id: row.id } }))
+          .categoryId,
+        category.id,
+      );
+      await prisma.transaction.delete({ where: { id: row.id } });
+      await redirected(
+        () => deleteCategory(form({ id: category.id })),
+        "erro=confirmacao",
+      );
+      await redirected(
+        () => deleteCategory(form({ id: category.id, confirm: "on" })),
+        "sucesso=excluida",
+      );
+      assert.equal(
+        await prisma.category.findUnique({ where: { id: category.id } }),
+        null,
+      );
+    },
+  );
   console.info(
     `Isolated test database: ${pathToFileURL(join(directory, "finance.db")).href}`,
   );
