@@ -46,7 +46,7 @@ O escopo é o Nubank: faturas do cartão e extratos da conta. Compras e parcelas
 - Conferir setembro com fatura e extrato completos; separar tipo errado (afeta indicadores) de categoria ausente (afeta distribuição).
 - Resolver somente ambiguidades confirmadas pelo usuário. Não classificar Pix por nome de pessoa ou intermediário de pagamentos sem contexto.
 - Cobertura por mês: o dashboard mostra, para cartão e conta, quantos lançamentos importados existem no mês e o intervalo de dias (`src/lib/import-coverage.ts`); origem ausente aparece destacada. Isso indica o que foi importado, não certifica completude: lançamentos de cartão usam a data da compra, e manuais não entram. Abril e junho/2026 parecem não ter fatura completa.
-- Regras pessoais configuráveis por pessoa antes de incluir a namorada.
+- Regras pessoais configuráveis por pessoa antes de incluir a namorada. Adiado por decisão do usuário em 28/09/2026: não há plano de incluir a conta dela por enquanto; não priorizar.
 - Ao restaurar backups muito antigos, revisar compatibilidade: eles podem reintroduzir categorias antigas; migrar o esquema não reexecuta transformações de dados já aplicadas.
 - Registrar novas decisões aqui. Assistentes externos não têm acesso automático à conversa que originou essas regras.
 

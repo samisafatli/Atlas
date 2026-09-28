@@ -83,6 +83,16 @@ export function isDebitPurchaseRefund(description: string) {
     text,
   );
 }
+// Colors only personal results; ownership and investment moves stay neutral.
+export function typeTone(type: string) {
+  return type === "INCOME"
+    ? "text-emerald-700"
+    : type === "EXPENSE"
+      ? "text-rose-700"
+      : type === "REFUND"
+        ? "text-sky-700"
+        : "text-[var(--foreground)]";
+}
 export function transactionSign(type: string) {
   return type === "TRANSFER"
     ? "↔ "

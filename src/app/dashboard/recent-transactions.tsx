@@ -4,6 +4,7 @@ import {
   categoryType,
   typeLabels,
   transactionSign,
+  typeTone,
 } from "@/lib/transaction-types";
 
 type RecentTransaction = {
@@ -65,7 +66,7 @@ export function RecentTransactions({
                 </p>
               </div>
               <span
-                className={`whitespace-nowrap text-sm font-semibold ${transaction.type === "EXPENSE" ? "text-rose-800" : transaction.type === "TRANSFER" ? "text-slate-600" : "text-emerald-800"}`}
+                className={`whitespace-nowrap text-sm font-semibold ${typeTone(transaction.type)}`}
               >
                 {transactionSign(transaction.type)}
                 {formatCents(

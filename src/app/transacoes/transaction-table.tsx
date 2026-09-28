@@ -7,6 +7,7 @@ import {
   categoryType,
   typeLabels,
   transactionSign,
+  typeTone,
 } from "@/lib/transaction-types";
 
 type Row = {
@@ -100,14 +101,7 @@ export function TransactionTable({
         </thead>
         <tbody className="divide-y divide-[var(--line)]">
           {transactions.map((transaction) => {
-            const tone =
-              transaction.type === "INCOME"
-                ? "text-emerald-700"
-                : transaction.type === "EXPENSE"
-                  ? "text-rose-700"
-                  : transaction.type === "REFUND"
-                    ? "text-sky-700"
-                    : "text-[var(--foreground)]";
+            const tone = typeTone(transaction.type);
             const typeLabel = typeLabels[transaction.type] ?? transaction.type;
             const amountSign = transactionSign(transaction.type);
 
