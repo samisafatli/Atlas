@@ -95,6 +95,7 @@ model Transaction {
   fingerprint String?   @unique
   sourceType  String    @default("MANUAL")
   externalId  String?
+  ownershipEstimated Boolean @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

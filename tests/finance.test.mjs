@@ -1079,11 +1079,24 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
         ).length,
         3,
       );
+      assert.equal(
+        stored.filter(
+          (r) => r.ownershipEstimated && r.category?.name === "Moradia",
+        ).length,
+        1,
+      );
       const parsed = backup.parseBackup(
         backup.backupJson(await backup.createBackupObject()),
       );
       assert.ok(parsed);
       await backup.restoreBackup(parsed);
+      assert.equal(
+        await prisma.transaction.count({
+          where: { accountId: a.id, ownershipEstimated: true },
+        }),
+        1,
+      );
+
       assert.equal(
         await prisma.transaction.count({
           where: { accountId: a.id, type: { startsWith: "MOTHER_" } },

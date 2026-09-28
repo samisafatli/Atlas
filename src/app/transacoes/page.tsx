@@ -495,6 +495,11 @@ export default async function TransactionsPage({
                             >
                               {typeLabel}
                             </span>
+                            {transaction.ownershipEstimated ? (
+                              <span className="mt-1 block text-xs font-normal text-amber-800">
+                                Divisão estimada com sua mãe
+                              </span>
+                            ) : null}
                           </td>
                           <td className="px-6 py-4 text-[var(--muted)]">
                             {categoryType(transaction.type) === null ? (

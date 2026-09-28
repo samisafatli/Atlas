@@ -15,6 +15,7 @@ type Props = {
     occurredAt: Date;
     categoryId: string | null;
     accountId: string;
+    ownershipEstimated?: boolean;
   };
   error?: boolean;
   requireCategory?: boolean;
@@ -42,6 +43,13 @@ export function TransactionForm({
       action={action}
       className="grid gap-4 rounded-2xl border border-[var(--line)] bg-white/80 p-5 sm:grid-cols-2"
     >
+      {transaction?.ownershipEstimated ? (
+        <p className="rounded-lg bg-amber-50 p-3 text-sm sm:col-span-2">
+          Divisão estimada com sua mãe: este pagamento foi considerado seu na
+          revisão do histórico. A categoria descreve o gasto; esta indicação
+          registra a incerteza sobre a quem ele pertence.
+        </p>
+      ) : null}
       {error ? (
         <p className="sm:col-span-2 text-sm text-rose-700" role="alert">
           Confira os campos obrigatórios e tente novamente.

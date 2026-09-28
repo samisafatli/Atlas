@@ -157,6 +157,7 @@ type BackupData = {
     fingerprint: string | null;
     sourceType: string;
     externalId: string | null;
+    ownershipEstimated: boolean;
   })[];
   assetAccounts: (Timed & {
     name: string;
@@ -228,6 +229,10 @@ export function parseBackup(contents: string): BackupDocument | null {
   )
     return null;
   const data = rawData as unknown as BackupData;
+  for (const row of data.transactions) {
+    if (row.ownershipEstimated === undefined) row.ownershipEstimated = false;
+    if (typeof row.ownershipEstimated !== "boolean") return null;
+  }
   if (parsed.version === 1) {
     for (const row of data.imports) {
       row.sourceType ??= "LEGACY";
@@ -518,6 +523,7 @@ export async function restoreBackup(document: BackupDocument) {
           fingerprint: row.fingerprint as string | null,
           sourceType: row.sourceType,
           externalId: row.externalId,
+          ownershipEstimated: row.ownershipEstimated,
           createdAt: new Date(String(row.createdAt)),
           updatedAt: new Date(String(row.updatedAt)),
         })),

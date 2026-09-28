@@ -18,6 +18,7 @@ export async function repairPersonalHistory() {
     row: (typeof rows)[number];
     type: TransactionType;
     category: string | null;
+    ownershipEstimated?: boolean;
   };
   const changes = new Map<string, Change>();
   const utilities = new Map<string, typeof rows>();
@@ -55,7 +56,8 @@ export async function repairPersonalHistory() {
     changes.set(group[0].id, {
       row: group[0],
       type: "EXPENSE",
-      category: "Moradia — divisão estimada",
+      category: "Moradia",
+      ownershipEstimated: true,
     });
     changes.set(group[1].id, {
       row: group[1],
@@ -71,7 +73,12 @@ export async function repairPersonalHistory() {
   );
   await prisma.$transaction(
     async (tx) => {
-      for (const { row, type, category } of changes.values()) {
+      for (const {
+        row,
+        type,
+        category,
+        ownershipEstimated,
+      } of changes.values()) {
         const categoryId = category
           ? (
               await tx.category.upsert({
@@ -105,7 +112,7 @@ export async function repairPersonalHistory() {
           : null;
         const result = await tx.transaction.updateMany({
           where: { id: row.id, updatedAt: row.updatedAt },
-          data: { type, categoryId, fingerprint },
+          data: { type, categoryId, fingerprint, ownershipEstimated },
         });
         if (result.count !== 1)
           throw new Error(
