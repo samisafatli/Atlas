@@ -973,6 +973,14 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       );
       assert.equal(bankTransactionType("Pbadministradora", -100n), "EXPENSE");
       assert.equal(bankTransactionType("PREVENT SENIOR", 100n), "INCOME");
+      const itau =
+        "Transferência recebida pelo Pix - SAMI SAFATLI - •••.387.827-•• - ITAÚ UNIBANCO S.A. (0341)";
+      assert.equal(bankTransactionType(itau, 100n), "MOTHER_INCOME");
+      assert.equal(bankTransactionType(itau, -100n), "EXPENSE");
+      assert.equal(
+        bankTransactionType("Pix SAMI SAFATLI CAIXA ECONOMICA FEDERAL", 100n),
+        "INCOME",
+      );
       assert.equal(
         salaryCategory(
           "SAMI SAFATLI CAIXA ECONOMICA FEDERAL",

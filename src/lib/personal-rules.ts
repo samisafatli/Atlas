@@ -17,6 +17,9 @@ export function motherTransactionType(
 ): TransactionType | null {
   const text = normalizedDescription(description);
   if (!negative && /\bmouna\b/.test(text)) return "MOTHER_INCOME";
+  // The owner's Itaú account is used by his mother; its credits are hers.
+  if (!negative && /\bsami safatli\b/.test(text) && /\bitau\b/.test(text))
+    return "MOTHER_INCOME";
   if (negative && /\b(bap administracao|claro|prevent senior)\b/.test(text))
     return "MOTHER_EXPENSE";
   return null;
