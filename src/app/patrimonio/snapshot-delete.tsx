@@ -12,7 +12,7 @@ export function ConfirmSnapshotDelete({ id }: { id: string }) {
       }}
     >
       <input name="id" type="hidden" value={id} />
-      <button className="text-sm text-rose-700 underline" type="submit">
+      <button className="text-sm text-neg underline" type="submit">
         Excluir
       </button>
     </form>

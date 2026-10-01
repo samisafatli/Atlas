@@ -15,7 +15,7 @@ export default async function ImportHistoryPage() {
         Arquivos processados e quantidade de novas transações gravadas.
       </p>
       {imports.length ? (
-        <ul className="mt-7 divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80">
+        <ul className="mt-7 divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-surface">
           {imports.map((item) => (
             <li
               className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"

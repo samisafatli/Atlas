@@ -17,7 +17,7 @@ export function AssetSnapshotForm({
   return (
     <form
       action={action}
-      className="grid gap-5 rounded-2xl border border-[var(--line)] bg-white/80 p-5"
+      className="grid gap-5 rounded-2xl border border-[var(--line)] bg-surface p-5"
     >
       <label className="grid max-w-xs gap-2 text-sm font-medium">
         Data do snapshot
@@ -37,7 +37,7 @@ export function AssetSnapshotForm({
         <div className="grid gap-3">
           {accounts.map((account) => (
             <label
-              className="grid gap-2 rounded-lg bg-[#f7f8f5] p-3 text-sm sm:grid-cols-[1fr_10rem] sm:items-center"
+              className="grid gap-2 rounded-lg bg-surface-2 p-3 text-sm sm:grid-cols-[1fr_10rem] sm:items-center"
               key={account.id}
             >
               <span>
@@ -48,7 +48,7 @@ export function AssetSnapshotForm({
               </span>
               <input
                 aria-label={`Valor de ${account.name}`}
-                className="min-h-10 rounded border border-[var(--line)] bg-white px-3 text-right"
+                className="min-h-10 rounded border border-[var(--line)] bg-surface-2 px-3 text-right"
                 min="0"
                 name={`amount:${account.id}`}
                 placeholder="0,00"
@@ -69,7 +69,7 @@ export function AssetSnapshotForm({
         Contas sem valor são consideradas R$ 0,00.
       </p>
       <button
-        className="min-h-11 justify-self-start rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
+        className="min-h-11 justify-self-start rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent"
         type="submit"
       >
         {snapshot ? "Salvar edição explícita" : "Salvar snapshot"}

@@ -194,7 +194,7 @@ export default async function TransactionsPage({
 
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
-              className="inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
+              className="inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent"
               href="/transacoes/nova"
             >
               Nova transação
@@ -216,7 +216,7 @@ export default async function TransactionsPage({
 
         {successMessage ? (
           <p
-            className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+            className="mb-5 rounded-lg bg-pos-soft p-3 text-sm text-pos"
             role="status"
           >
             {successMessage === "criada"
@@ -230,7 +230,7 @@ export default async function TransactionsPage({
         ) : null}
         {noticeError ? (
           <p
-            className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
+            className="mb-5 rounded-lg bg-neg-soft p-3 text-sm text-neg"
             role="alert"
           >
             Não foi possível concluir a operação. Verifique os dados e tente
@@ -239,7 +239,7 @@ export default async function TransactionsPage({
         ) : null}
         {firstValue(params.categoriaStatus) === "atualizada" ? (
           <p
-            className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+            className="mb-5 rounded-lg bg-pos-soft p-3 text-sm text-pos"
             role="status"
           >
             Categoria atualizada.
@@ -257,7 +257,7 @@ export default async function TransactionsPage({
           categories={categories}
         />
 
-        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80">
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-surface">
           <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4 sm:px-6">
             <h2 className="font-medium">Todas as transações</h2>
             <span className="text-sm text-[var(--muted)]">

@@ -38,7 +38,7 @@ export function SpendingCalendar({
   ];
   return (
     <section
-      className="rounded-2xl border border-[var(--line)] bg-white/80 p-5"
+      className="rounded-2xl border border-[var(--line)] bg-surface p-5"
       aria-labelledby="calendar-title"
     >
       <div className="mb-4">
@@ -77,11 +77,11 @@ export function SpendingCalendar({
                     : 1;
           const date = `${month}-${String(day).padStart(2, "0")}`;
           const tones = [
-            "bg-[#f7f8f5]",
-            "bg-[#e5efe8]",
-            "bg-[#c6ddcd]",
-            "bg-[#94c2a2]",
-            "bg-[#5e9a75]",
+            "bg-[var(--heat-0)]",
+            "bg-[var(--heat-1)]",
+            "bg-[var(--heat-2)]",
+            "bg-[var(--heat-3)]",
+            "bg-[var(--heat-4)] text-[var(--on-heat)]",
           ];
           return (
             <Link
@@ -93,7 +93,7 @@ export function SpendingCalendar({
               title={`${day}: ${formatCents(amount)}`}
             >
               <span className="text-xs font-medium">{day}</span>
-              <span className="truncate text-[10px] text-[var(--foreground)]">
+              <span className="truncate text-[10px]">
                 {amount ? formatCents(amount) : "—"}
               </span>
             </Link>

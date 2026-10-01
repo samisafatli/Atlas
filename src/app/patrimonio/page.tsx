@@ -45,7 +45,7 @@ export default async function AssetsPage({
 
         {query.erro ? (
           <p
-            className="my-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
+            className="my-5 rounded-lg bg-neg-soft p-3 text-sm text-neg"
             role="alert"
           >
             {errors[query.erro] ??
@@ -54,7 +54,7 @@ export default async function AssetsPage({
         ) : null}
         {query.sucesso ? (
           <p
-            className="my-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+            className="my-5 rounded-lg bg-pos-soft p-3 text-sm text-pos"
             role="status"
           >
             Alteração salva.
@@ -66,7 +66,7 @@ export default async function AssetsPage({
           </h2>
           <form
             action={saveAssetAccount}
-            className="mb-5 grid gap-3 rounded-xl border border-[var(--line)] bg-white/80 p-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end"
+            className="mb-5 grid gap-3 rounded-xl border border-[var(--line)] bg-surface p-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end"
           >
             <label className="grid gap-2 text-sm">
               Nome
@@ -100,7 +100,7 @@ export default async function AssetsPage({
               </select>
             </label>
             <button
-              className="min-h-10 rounded-lg bg-[var(--foreground)] px-4 text-sm font-medium text-white"
+              className="min-h-10 rounded-lg bg-[var(--foreground)] hover:bg-accent px-4 text-sm font-medium text-on-accent"
               type="submit"
             >
               Adicionar ativo
@@ -110,7 +110,7 @@ export default async function AssetsPage({
             <div className="grid gap-3">
               {accounts.map((account) => (
                 <article
-                  className="grid gap-3 rounded-xl border border-[var(--line)] bg-white/70 p-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                  className="grid gap-3 rounded-xl border border-[var(--line)] bg-surface-2 p-4 sm:grid-cols-[1fr_auto] sm:items-center"
                   key={account.id}
                 >
                   <p className="text-sm font-medium">
@@ -164,7 +164,7 @@ export default async function AssetsPage({
                     <form action={deleteAssetAccount}>
                       <input name="id" type="hidden" value={account.id} />
                       <button
-                        className="text-sm text-rose-700 underline"
+                        className="text-sm text-neg underline"
                         type="submit"
                       >
                         Excluir
@@ -186,7 +186,7 @@ export default async function AssetsPage({
               Histórico patrimonial
             </h2>
             <Link
-              className="inline-flex min-h-10 items-center rounded-lg bg-[var(--foreground)] px-4 text-sm font-medium text-white"
+              className="inline-flex min-h-10 items-center rounded-lg bg-[var(--foreground)] hover:bg-accent px-4 text-sm font-medium text-on-accent"
               href="/patrimonio/snapshots/novo"
             >
               Registrar snapshot
@@ -194,7 +194,7 @@ export default async function AssetsPage({
           </div>
           <SnapshotChart snapshots={snapshots} />
           {snapshots.length ? (
-            <div className="mt-5 overflow-hidden rounded-xl border border-[var(--line)] bg-white/80">
+            <div className="mt-5 overflow-hidden rounded-xl border border-[var(--line)] bg-surface">
               <ul className="divide-y divide-[var(--line)]">
                 {snapshots.toReversed().map((snapshot) => (
                   <li

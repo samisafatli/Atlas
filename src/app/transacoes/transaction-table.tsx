@@ -53,7 +53,7 @@ export function TransactionTable({
     <div className="px-6 py-16 text-center">
       <div
         aria-hidden="true"
-        className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-[#e9f0eb] text-xl text-[var(--accent)]"
+        className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-surface-2 text-xl text-[var(--accent)]"
       >
         {hasFilters ? (
           <Search className="size-5" />
@@ -83,7 +83,7 @@ export function TransactionTable({
   ) : (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-        <thead className="bg-[#f7f8f5] text-xs tracking-wide text-[var(--muted)] uppercase">
+        <thead className="bg-surface-2 text-xs tracking-wide text-[var(--muted)] uppercase">
           <tr>
             <th className="px-6 py-3 font-medium" scope="col">
               Data
@@ -133,7 +133,7 @@ export function TransactionTable({
                     {typeLabel}
                   </span>
                   {transaction.ownershipEstimated ? (
-                    <span className="mt-1 block text-xs font-normal text-amber-800">
+                    <span className="mt-1 block text-xs font-normal text-warn">
                       Divisão estimada com sua mãe
                     </span>
                   ) : null}
@@ -180,7 +180,7 @@ export function TransactionTable({
                   <div className="flex justify-end gap-1">
                     <Link
                       aria-label={`Editar “${transaction.note ?? transaction.description}”`}
-                      className="grid size-9 place-items-center rounded-lg text-[var(--accent)] transition hover:bg-[#e9f0eb]"
+                      className="grid size-9 place-items-center rounded-lg text-[var(--accent)] transition hover:bg-surface-2"
                       href={`/transacoes/${transaction.id}/editar`}
                       title="Editar"
                     >

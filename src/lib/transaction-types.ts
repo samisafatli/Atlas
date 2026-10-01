@@ -86,11 +86,11 @@ export function isDebitPurchaseRefund(description: string) {
 // Colors only personal results; ownership and investment moves stay neutral.
 export function typeTone(type: string) {
   return type === "INCOME"
-    ? "text-emerald-700"
+    ? "text-pos"
     : type === "EXPENSE"
-      ? "text-rose-700"
+      ? "text-neg"
       : type === "REFUND"
-        ? "text-sky-700"
+        ? "text-info"
         : "text-[var(--foreground)]";
 }
 export function transactionSign(type: string) {

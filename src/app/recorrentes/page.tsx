@@ -39,7 +39,7 @@ export default async function RecurringPage() {
         <div className="mt-7 grid gap-4">
           {recurring.map((item) => (
             <article
-              className="rounded-2xl border border-[var(--line)] bg-white/80 p-5"
+              className="rounded-2xl border border-[var(--line)] bg-surface p-5"
               key={`${item.description}-${item.accountName}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -88,7 +88,7 @@ export default async function RecurringPage() {
           ))}
         </div>
       ) : (
-        <p className="mt-7 rounded-2xl border border-[var(--line)] bg-white/70 p-8 text-sm text-[var(--muted)]">
+        <p className="mt-7 rounded-2xl border border-[var(--line)] bg-surface-2 p-8 text-sm text-[var(--muted)]">
           Ainda não há despesas mensais compatíveis. Quando houver pelo menos
           três ocorrências, elas aparecerão aqui.
         </p>

@@ -12,7 +12,7 @@ function ImportButton({ count }: { count: number | null }) {
   const { pending } = useFormStatus();
   return (
     <button
-      className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white disabled:opacity-50"
+      className="min-h-11 rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent disabled:opacity-50"
       disabled={pending || count === null}
       type="submit"
     >
@@ -106,7 +106,7 @@ export function SaveImportForm({
   return (
     <form
       action={saveNubankImport}
-      className="grid gap-5 rounded-2xl border border-[var(--line)] bg-white/80 p-5"
+      className="grid gap-5 rounded-2xl border border-[var(--line)] bg-surface p-5"
     >
       <p className="text-sm text-[var(--muted)]">
         Sem identificador bancário, lançamentos iguais são contados por arquivo.
@@ -151,7 +151,7 @@ export function SaveImportForm({
       </label>
       {counts ? (
         <div className="grid gap-3">
-          <p className="rounded-lg bg-[#f7f8f5] p-3 text-sm" role="status">
+          <p className="rounded-lg bg-surface-2 p-3 text-sm" role="status">
             {counts.newCount} novas transações; {counts.existing} já existentes
             ou repetidas entre os arquivos selecionados.
           </p>

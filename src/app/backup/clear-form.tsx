@@ -98,7 +98,7 @@ export function ClearForm() {
         <label className="grid gap-2 text-sm font-medium">
           Digite LIMPAR para confirmar
           <input
-            className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3"
+            className="min-h-11 rounded-lg border border-[var(--line)] bg-surface-2 px-3"
             autoComplete="off"
             value={confirmation}
             onChange={(event) => setConfirmation(event.target.value)}
@@ -108,7 +108,7 @@ export function ClearForm() {
       <button
         type="submit"
         disabled={busy || confirmation !== "LIMPAR"}
-        className="min-h-11 justify-self-start rounded-lg bg-rose-800 px-5 text-sm font-medium text-white disabled:opacity-50"
+        className="min-h-11 justify-self-start rounded-lg bg-neg hover:opacity-90 px-5 text-sm font-medium text-on-accent disabled:opacity-50"
       >
         {busy
           ? "Salvando backup e limpando…"
@@ -117,14 +117,14 @@ export function ClearForm() {
             : "Limpar lançamentos e importações"}
       </button>
       {error ? (
-        <p role="alert" className="text-sm text-rose-800">
+        <p role="alert" className="text-sm text-neg">
           {error}
         </p>
       ) : null}
       {protectionFile ? (
         <div
           role="status"
-          className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+          className="rounded-lg bg-pos-soft p-3 text-sm text-pos"
         >
           Limpeza concluída. Backup anterior salvo em{" "}
           <code className="break-all">{protectionFile}</code>, relativo à pasta

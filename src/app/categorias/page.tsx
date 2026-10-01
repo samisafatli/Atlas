@@ -4,9 +4,9 @@ import { deleteCategory, saveCategory } from "./actions";
 import { PageShell } from "@/app/page-shell";
 
 const inputClass =
-  "min-h-11 rounded-lg border border-[var(--line)] bg-white px-3";
+  "min-h-11 rounded-lg border border-[var(--line)] bg-surface-2 px-3";
 const buttonClass =
-  "min-h-11 rounded-lg bg-[var(--foreground)] px-4 text-sm text-white";
+  "min-h-11 rounded-lg bg-[var(--foreground)] hover:bg-accent px-4 text-sm text-on-accent";
 
 export default async function CategoriesPage({
   searchParams,
@@ -32,24 +32,18 @@ export default async function CategoriesPage({
       <h1 className="mb-3 text-3xl font-medium">Categorias</h1>
 
       {query.erro ? (
-        <p
-          role="alert"
-          className="mb-5 rounded-lg bg-rose-50 p-3 text-rose-800"
-        >
+        <p role="alert" className="mb-5 rounded-lg bg-neg-soft p-3 text-neg">
           {errors[query.erro] ?? errors.dados}
         </p>
       ) : null}
       {query.sucesso ? (
-        <p
-          role="status"
-          className="mb-5 rounded-lg bg-emerald-50 p-3 text-emerald-800"
-        >
+        <p role="status" className="mb-5 rounded-lg bg-pos-soft p-3 text-pos">
           {query.sucesso === "excluida"
             ? "Categoria excluída."
             : "Categoria salva."}
         </p>
       ) : null}
-      <section className="mb-8 rounded-2xl border border-[var(--line)] bg-white/80 p-5">
+      <section className="mb-8 rounded-2xl border border-[var(--line)] bg-surface p-5">
         <h2 className="mb-4 font-medium">Nova categoria</h2>
         <form
           action={saveCategory}
@@ -95,7 +89,7 @@ export default async function CategoriesPage({
           return (
             <section
               key={category.id}
-              className="rounded-2xl border border-[var(--line)] bg-white/80 p-5"
+              className="rounded-2xl border border-[var(--line)] bg-surface p-5"
             >
               <form
                 action={saveCategory}
@@ -131,9 +125,7 @@ export default async function CategoriesPage({
                     <input type="checkbox" name="confirm" required />
                     Confirmar exclusão de {category.name}
                   </label>
-                  <button className="min-h-11 px-3 text-rose-700">
-                    Excluir
-                  </button>
+                  <button className="min-h-11 px-3 text-neg">Excluir</button>
                 </form>
               ) : null}
             </section>

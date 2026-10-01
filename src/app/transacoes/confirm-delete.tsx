@@ -21,7 +21,7 @@ export function ConfirmDelete({
       <input type="hidden" name="id" value={id} />
       <button
         aria-label={`Excluir “${description}”`}
-        className="grid size-9 place-items-center rounded-lg text-rose-700 transition hover:bg-rose-50"
+        className="grid size-9 place-items-center rounded-lg text-neg transition hover:bg-neg-soft"
         title="Excluir"
         type="submit"
       >

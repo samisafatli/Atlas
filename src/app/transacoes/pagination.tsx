@@ -19,7 +19,7 @@ export function Pagination({
     >
       {page > 1 ? (
         <Link
-          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-surface-2"
           href={previousHref}
         >
           <ChevronLeft aria-hidden="true" className="size-4" />
@@ -39,7 +39,7 @@ export function Pagination({
       </span>
       {page < pageCount ? (
         <Link
-          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-[#e9f0eb]"
+          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--line)] px-4 text-sm hover:bg-surface-2"
           href={nextHref}
         >
           Próxima

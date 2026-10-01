@@ -21,7 +21,7 @@ export function ImportCoverage({
   return (
     <p className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--muted)]">
       {sources.map(([label, item]) => (
-        <span key={label} className={item ? undefined : "text-amber-800"}>
+        <span key={label} className={item ? undefined : "text-warn"}>
           {label}: {item ? describe(item) : "nenhum lançamento importado"}
         </span>
       ))}

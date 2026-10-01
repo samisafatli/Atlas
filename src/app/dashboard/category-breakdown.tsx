@@ -38,7 +38,7 @@ export function CategoryBreakdown({
   );
   return (
     <section
-      className="rounded-2xl border border-[var(--line)] bg-white/80 p-5"
+      className="rounded-2xl border border-[var(--line)] bg-surface p-5"
       aria-labelledby="category-title"
     >
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -51,13 +51,21 @@ export function CategoryBreakdown({
       </div>
       {items.length ? (
         <ul className="grid gap-4">
-          {items.map((item) => {
+          {items.map((item, index) => {
+            const color = item.id
+              ? `var(--cat-${(index % 8) + 1})`
+              : "var(--muted)";
             const percentage =
               total > 0n ? Number((item.amount * 10000n) / total) / 100 : 0;
             return (
               <li key={`${item.id}-${item.name}`}>
                 <div className="mb-1 flex justify-between gap-4 text-sm">
-                  <span>
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ background: color }}
+                    />
                     {item.id ? (
                       <Link
                         className="hover:underline"
@@ -76,12 +84,13 @@ export function CategoryBreakdown({
                 </div>
                 <div
                   aria-label={`${item.name}: ${percentage.toFixed(2)} por cento`}
-                  className="h-2 overflow-hidden rounded-full bg-[#e9eee9]"
+                  className="h-1.5 overflow-hidden rounded-full bg-track"
                   role="img"
                 >
                   <div
-                    className="h-full rounded-full bg-[var(--accent)]"
+                    className="h-full rounded-full"
                     style={{
+                      background: color,
                       width: `${Math.max(0, Math.min(percentage, 100))}%`,
                     }}
                   />
@@ -91,7 +100,7 @@ export function CategoryBreakdown({
           })}
         </ul>
       ) : (
-        <p className="rounded-lg bg-[#f7f8f5] p-4 text-sm text-[var(--muted)]">
+        <p className="rounded-lg bg-surface-2 p-4 text-sm text-[var(--muted)]">
           Sem despesas neste mês.
         </p>
       )}

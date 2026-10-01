@@ -5,13 +5,13 @@ type Point = { snapshotDate: Date; totalCents: bigint };
 export function SnapshotChart({ snapshots }: { snapshots: Point[] }) {
   if (snapshots.length === 0)
     return (
-      <div className="rounded-xl bg-[#f7f8f5] p-6 text-sm text-[var(--muted)]">
+      <div className="rounded-xl bg-surface-2 p-6 text-sm text-[var(--muted)]">
         Ainda não há snapshots para mostrar no gráfico.
       </div>
     );
   if (snapshots.length === 1)
     return (
-      <div className="rounded-xl border border-[var(--line)] bg-[#f7f8f5] p-6">
+      <div className="rounded-xl border border-[var(--line)] bg-surface-2 p-6">
         <p className="font-medium">Um snapshot registrado</p>
         <p className="mt-2 text-sm">
           {new Intl.DateTimeFormat("pt-BR", {
@@ -50,7 +50,7 @@ export function SnapshotChart({ snapshots }: { snapshots: Point[] }) {
   }));
   const pointString = points.map((point) => `${point.x},${point.y}`).join(" ");
   return (
-    <div className="rounded-xl bg-[#f7f8f5] p-3">
+    <div className="rounded-xl bg-surface-2 p-3">
       <svg
         aria-label="Evolução do patrimônio total"
         className="h-64 w-full"

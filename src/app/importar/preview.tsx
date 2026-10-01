@@ -94,7 +94,7 @@ export function ImportPreview() {
           event.preventDefault();
           void selectFiles(event.dataTransfer.files);
         }}
-        className="grid cursor-pointer gap-2 rounded-2xl border border-dashed border-[var(--accent)] bg-white/70 p-8 text-center"
+        className="grid cursor-pointer gap-2 rounded-2xl border border-dashed border-[var(--accent)] bg-surface-2 p-8 text-center"
       >
         <Upload
           aria-hidden="true"
@@ -114,10 +114,7 @@ export function ImportPreview() {
         />
       </label>
       {error ? (
-        <p
-          className="rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
-          role="alert"
-        >
+        <p className="rounded-lg bg-neg-soft p-3 text-sm text-neg" role="alert">
           {error}
         </p>
       ) : null}
@@ -150,7 +147,7 @@ export function ImportPreview() {
       ) : null}
       {transactions.length ? (
         <section
-          className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80"
+          className="overflow-hidden rounded-2xl border border-[var(--line)] bg-surface"
           aria-label="Prévia do arquivo"
         >
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4">
@@ -176,7 +173,7 @@ export function ImportPreview() {
           </div>
           <div className="max-h-[28rem] overflow-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
-              <thead className="sticky top-0 bg-[#f7f8f5] text-xs uppercase text-[var(--muted)]">
+              <thead className="sticky top-0 bg-surface-2 text-xs uppercase text-[var(--muted)]">
                 <tr>
                   <th className="px-5 py-3">Data</th>
                   <th className="px-5 py-3">Descrição</th>
@@ -221,7 +218,7 @@ export function ImportPreview() {
           Cancelar
         </Link>
         <button
-          className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white disabled:opacity-50"
+          className="min-h-11 rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent disabled:opacity-50"
           disabled={loading || !files.length}
           onClick={continueImport}
           type="button"

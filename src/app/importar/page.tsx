@@ -22,7 +22,7 @@ export default async function ImportPage({
         <ImportPreview />
         {erro ? (
           <p
-            className="mt-4 rounded-lg bg-rose-50 p-4 text-sm text-rose-800"
+            className="mt-4 rounded-lg bg-neg-soft p-4 text-sm text-neg"
             role="alert"
           >
             {erro === "legado"

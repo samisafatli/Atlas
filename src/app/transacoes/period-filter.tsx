@@ -17,7 +17,7 @@ export function PeriodFilter({
   const [selectedMonth, setMonth] = useState(month.slice(5));
   const [selectedDay, setDay] = useState(day);
   const inputClass =
-    "min-h-11 min-w-0 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]";
+    "min-h-11 min-w-0 rounded-lg border border-[var(--line)] bg-surface-2 px-3 font-normal outline-none focus:border-[var(--accent)]";
   return (
     <>
       <label className="grid gap-2 text-sm font-medium" htmlFor="year">

@@ -7,19 +7,19 @@ export default function BackupPage() {
     <PageShell width="narrow">
       <h1 className="text-3xl font-medium">Backup e restauração</h1>
       <section className="mt-7 grid gap-6">
-        <article className="rounded-2xl border border-[var(--line)] bg-white/80 p-5">
+        <article className="rounded-2xl border border-[var(--line)] bg-surface p-5">
           <h2 className="font-medium">Exportar seus dados</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
             Exporte todos os seus dados em um arquivo JSON.
           </p>
           <a
-            className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
+            className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent"
             href="/api/backup"
           >
             Baixar backup JSON
           </a>
         </article>
-        <article className="rounded-2xl border border-[var(--line)] bg-white/80 p-5">
+        <article className="rounded-2xl border border-[var(--line)] bg-surface p-5">
           <h2 className="mb-2 font-medium">Restaurar um backup</h2>
           <p className="mb-4 text-sm leading-6 text-[var(--muted)]">
             Restaure um arquivo JSON do Atlas. Todos os dados atuais serão
@@ -32,7 +32,7 @@ export default function BackupPage() {
           </p>
           <RestoreForm />
         </article>
-        <article className="rounded-2xl border border-rose-200 bg-white/80 p-5">
+        <article className="rounded-2xl border border-neg-line bg-surface p-5">
           <h2 className="mb-2 font-medium">Limpar dados</h2>
           <p className="mb-4 text-sm leading-6 text-[var(--muted)]">
             Antes de apagar, o Atlas salva um backup JSON completo em{" "}

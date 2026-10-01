@@ -24,7 +24,7 @@ export function TransactionFilters({
   return (
     <form
       action="/transacoes"
-      className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/70 p-5 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1fr_1fr_1.2fr_auto_auto] lg:items-end"
+      className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-surface-2 p-5 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1fr_1fr_1.2fr_auto_auto] lg:items-end"
       method="get"
     >
       {importId ? (
@@ -41,7 +41,7 @@ export function TransactionFilters({
       <label className="grid gap-2 text-sm font-medium" htmlFor="type">
         Tipo
         <select
-          className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
+          className="min-h-11 rounded-lg border border-[var(--line)] bg-surface-2 px-3 font-normal outline-none focus:border-[var(--accent)]"
           id="type"
           name="type"
           defaultValue={type}
@@ -58,7 +58,7 @@ export function TransactionFilters({
       <label className="grid gap-2 text-sm font-medium" htmlFor="category">
         Categoria
         <select
-          className="min-h-11 rounded-lg border border-[var(--line)] bg-white px-3 font-normal outline-none focus:border-[var(--accent)]"
+          className="min-h-11 rounded-lg border border-[var(--line)] bg-surface-2 px-3 font-normal outline-none focus:border-[var(--accent)]"
           id="category"
           name="category"
           defaultValue={categoryId}
@@ -74,7 +74,7 @@ export function TransactionFilters({
       </label>
 
       <button
-        className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white transition hover:bg-[var(--accent)]"
+        className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-on-accent transition hover:bg-accent"
         type="submit"
       >
         Filtrar

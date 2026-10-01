@@ -26,7 +26,7 @@ export default async function CategoryRulesPage({
       <h1 className="mb-7 text-3xl font-medium">Regras automáticas</h1>
       {query.erro ? (
         <p
-          className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
+          className="mb-5 rounded-lg bg-neg-soft p-3 text-sm text-neg"
           role="alert"
         >
           {query.erro === "duplicada"
@@ -40,7 +40,7 @@ export default async function CategoryRulesPage({
       ) : null}
       {query.sucesso ? (
         <p
-          className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+          className="mb-5 rounded-lg bg-pos-soft p-3 text-sm text-pos"
           role="status"
         >
           Regra atualizada.
@@ -48,7 +48,7 @@ export default async function CategoryRulesPage({
       ) : null}
       <form
         action={saveCategoryRule}
-        className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/80 p-5 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end"
+        className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-surface p-5 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end"
       >
         <label className="grid gap-2 text-sm font-medium">
           Descrição contém
@@ -80,7 +80,7 @@ export default async function CategoryRulesPage({
           Ativa
         </label>
         <button
-          className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
+          className="min-h-11 rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent"
           type="submit"
         >
           Criar regra
@@ -90,7 +90,7 @@ export default async function CategoryRulesPage({
         {rules.length ? (
           rules.map((rule) => (
             <article
-              className="grid gap-3 rounded-xl border border-[var(--line)] bg-white/70 p-4 sm:grid-cols-[1fr_auto_auto] sm:items-center"
+              className="grid gap-3 rounded-xl border border-[var(--line)] bg-surface-2 p-4 sm:grid-cols-[1fr_auto_auto] sm:items-center"
               key={rule.id}
             >
               <p className="text-sm">
@@ -138,10 +138,7 @@ export default async function CategoryRulesPage({
               </form>
               <form action={deleteCategoryRule}>
                 <input name="id" type="hidden" value={rule.id} />
-                <button
-                  className="text-sm text-rose-700 underline"
-                  type="submit"
-                >
+                <button className="text-sm text-neg underline" type="submit">
                   Excluir
                 </button>
               </form>
@@ -159,7 +156,7 @@ export default async function CategoryRulesPage({
       </p>
       <form
         action={saveNameRule}
-        className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-white/80 p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+        className="mb-8 grid gap-4 rounded-2xl border border-[var(--line)] bg-surface p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
       >
         <label className="grid gap-2 text-sm font-medium">
           Descrição contém
@@ -182,7 +179,7 @@ export default async function CategoryRulesPage({
           />
         </label>
         <button
-          className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
+          className="min-h-11 rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent"
           type="submit"
         >
           Criar regra
@@ -192,7 +189,7 @@ export default async function CategoryRulesPage({
         {nameRules.length ? (
           nameRules.map((rule) => (
             <article
-              className="grid gap-3 rounded-xl border border-[var(--line)] bg-white/70 p-4 sm:grid-cols-[1fr_auto_auto] sm:items-center"
+              className="grid gap-3 rounded-xl border border-[var(--line)] bg-surface-2 p-4 sm:grid-cols-[1fr_auto_auto] sm:items-center"
               key={rule.id}
             >
               <p className="text-sm">
@@ -224,10 +221,7 @@ export default async function CategoryRulesPage({
               </form>
               <form action={deleteNameRule}>
                 <input name="id" type="hidden" value={rule.id} />
-                <button
-                  className="text-sm text-rose-700 underline"
-                  type="submit"
-                >
+                <button className="text-sm text-neg underline" type="submit">
                   Excluir
                 </button>
               </form>

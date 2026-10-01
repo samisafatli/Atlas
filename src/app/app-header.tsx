@@ -21,7 +21,7 @@ const settingsLinks = [
 ] as const;
 
 const itemClass = (active: boolean) =>
-  `inline-flex min-h-11 items-center rounded-lg px-3 text-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${active ? "bg-[var(--foreground)] font-medium text-white" : "text-[var(--muted)] hover:bg-[#e9f0eb] hover:text-[var(--foreground)]"}`;
+  `inline-flex min-h-11 items-center rounded-lg px-3 text-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${active ? "bg-surface-3 font-medium text-[var(--foreground)]" : "text-[var(--muted)] hover:bg-surface-2 hover:text-[var(--foreground)]"}`;
 
 function SettingsMenu({ pathname }: { pathname: string }) {
   const menu = useRef<HTMLDetailsElement>(null);
@@ -57,7 +57,7 @@ function SettingsMenu({ pathname }: { pathname: string }) {
         <Settings aria-hidden="true" className="size-5" />
         <span className="sr-only">Configurações</span>
       </summary>
-      <div className="absolute right-0 z-10 mt-2 grid min-w-44 gap-1 rounded-xl border border-[var(--line)] bg-white p-1 shadow-lg">
+      <div className="absolute right-0 z-10 mt-2 grid min-w-44 gap-1 rounded-xl border border-[var(--line)] bg-surface-2 p-1 shadow-lg">
         {settingsLinks.map(([href, label]) => (
           <Link
             key={href}
@@ -76,12 +76,12 @@ function SettingsMenu({ pathname }: { pathname: string }) {
 export function AppHeader() {
   const pathname = usePathname();
   return (
-    <header className="border-b border-[var(--line)] bg-white/80">
+    <header className="border-b border-[var(--line)] bg-[var(--background)]">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
         <Link
           href="/dashboard"
           aria-label="Atlas — Dashboard"
-          className="w-fit rounded text-sm font-semibold tracking-[0.2em] text-[var(--accent)] uppercase focus-visible:outline-2 focus-visible:outline-offset-4"
+          className="w-fit rounded text-base font-bold tracking-tight text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-4"
         >
           Atlas
         </Link>

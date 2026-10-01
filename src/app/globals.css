@@ -1,24 +1,74 @@
 @import "tailwindcss";
 
+/* Dark-first palette. Components use these tokens, never literal colors:
+   accent marks interaction, pos/neg/info/warn carry financial meaning. */
 :root {
-  color-scheme: light;
-  --background: #f5f6f2;
-  --foreground: #18352b;
-  --muted: #68776f;
-  --accent: #2e6c53;
-  --line: #dce3dc;
+  color-scheme: dark;
+  --background: #11161c;
+  --surface: #171e26;
+  --surface-2: #1d252e;
+  --surface-3: #26303b;
+  --foreground: #e8edf2;
+  --muted: #8b96a3;
+  --line: #222a33;
+  --line-strong: #323c47;
+  --accent: #7fd8b4;
+  --on-accent: #0f1a19;
+  --hero: #1c2a2b;
+  --hero-line: #2a3d3d;
+  --pos: #7fd8b4;
+  --pos-soft: #16302a;
+  --neg: #f08f84;
+  --neg-soft: #3a1f1f;
+  --neg-line: #5a2c2a;
+  --info: #8fb9e6;
+  --warn: #e8c37a;
+  --warn-soft: #33291a;
+  --track: #222a33;
+  --heat-0: #18202a;
+  --heat-1: #1f3034;
+  --heat-2: #27504c;
+  --heat-3: #3b8274;
+  --heat-4: #6cc7a9;
+  --on-heat: #0f1a19;
+  /* Categorical series, assigned by rank; the uncategorized slice stays muted. */
+  --cat-1: #e2a65a;
+  --cat-2: #7fb3e6;
+  --cat-3: #e88a7d;
+  --cat-4: #8fd1a8;
+  --cat-5: #c79be8;
+  --cat-6: #e6d27f;
+  --cat-7: #8fb9c4;
+  --cat-8: #e89bc4;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-hero: var(--hero);
+  --color-pos: var(--pos);
+  --color-pos-soft: var(--pos-soft);
+  --color-neg: var(--neg);
+  --color-neg-soft: var(--neg-soft);
+  --color-neg-line: var(--neg-line);
+  --color-info: var(--info);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-track: var(--track);
 }
 
-/* System fonts keep the local-first app independent of network downloads. */
+/* Manrope is bundled from node_modules, so the app stays usable offline. */
 @theme {
   --font-sans:
-    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
+    "Manrope Variable", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
@@ -34,6 +84,20 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Base layer, so utility classes on a field still win. */
+@layer base {
+  input,
+  select,
+  textarea {
+    background-color: var(--surface-2);
+    color: var(--foreground);
+  }
+
+  option {
+    background-color: var(--surface-2);
+  }
+}
+
 ::selection {
-  background: #c8ded0;
+  background: #27504c;
 }

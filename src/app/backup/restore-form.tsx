@@ -51,7 +51,7 @@ export function RestoreForm() {
   return (
     <form
       action={restore}
-      className="grid gap-4 rounded-2xl border border-[var(--line)] bg-white/80 p-5"
+      className="grid gap-4 rounded-2xl border border-[var(--line)] bg-surface p-5"
     >
       <label className="grid gap-2 text-sm font-medium">
         Arquivo do Atlas
@@ -64,23 +64,20 @@ export function RestoreForm() {
         />
       </label>
       <button
-        className="min-h-11 justify-self-start rounded-lg bg-rose-800 px-5 text-sm font-medium text-white disabled:opacity-50"
+        className="min-h-11 justify-self-start rounded-lg bg-neg hover:opacity-90 px-5 text-sm font-medium text-on-accent disabled:opacity-50"
         disabled={busy}
         type="submit"
       >
         {busy ? "Restaurando…" : "Validar e restaurar backup"}
       </button>
       {error ? (
-        <p
-          className="rounded-lg bg-rose-50 p-3 text-sm text-rose-800"
-          role="alert"
-        >
+        <p className="rounded-lg bg-neg-soft p-3 text-sm text-neg" role="alert">
           {error}
         </p>
       ) : null}
       {protectionFile ? (
         <div
-          className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+          className="rounded-lg bg-pos-soft p-3 text-sm text-pos"
           role="status"
         >
           <p>
