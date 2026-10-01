@@ -158,6 +158,7 @@ type BackupData = {
     sourceType: string;
     externalId: string | null;
     ownershipEstimated: boolean;
+    note: string | null;
   })[];
   assetAccounts: (Timed & {
     name: string;
@@ -232,6 +233,13 @@ export function parseBackup(contents: string): BackupDocument | null {
   for (const row of data.transactions) {
     if (row.ownershipEstimated === undefined) row.ownershipEstimated = false;
     if (typeof row.ownershipEstimated !== "boolean") return null;
+    // Older backups predate notes.
+    row.note ??= null;
+    if (
+      row.note !== null &&
+      (typeof row.note !== "string" || row.note.length > 300)
+    )
+      return null;
   }
   if (parsed.version === 1) {
     for (const row of data.imports) {
@@ -514,6 +522,7 @@ export async function restoreBackup(document: BackupDocument) {
           sourceType: row.sourceType,
           externalId: row.externalId,
           ownershipEstimated: row.ownershipEstimated,
+          note: row.note,
           createdAt: new Date(String(row.createdAt)),
           updatedAt: new Date(String(row.updatedAt)),
         })),

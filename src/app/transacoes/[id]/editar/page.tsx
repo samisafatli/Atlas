@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { TransactionForm } from "../../form";
 import { PageShell } from "@/app/page-shell";
+import { findInstallmentSiblings } from "@/lib/installments";
 
 export default async function EditTransactionPage({
   params,
@@ -18,6 +19,7 @@ export default async function EditTransactionPage({
     prisma.account.findMany({ orderBy: { name: "asc" } }),
   ]);
   if (!transaction) notFound();
+  const installments = await findInstallmentSiblings(prisma, transaction);
   return (
     <PageShell width="narrow">
       <Link className="text-sm text-[var(--muted)]" href="/transacoes">
@@ -28,6 +30,7 @@ export default async function EditTransactionPage({
         categories={categories}
         accounts={accounts}
         transaction={transaction}
+        installments={installments}
         error={query.erro === "dados"}
       />
     </PageShell>

@@ -1444,6 +1444,156 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
     },
   );
   await t.test(
+    "notes are saved, shared with matching installments and backed up",
+    async () => {
+      const { matchInstallments, parseInstallment } =
+        await import("../src/lib/installments.ts");
+      assert.deepEqual(parseInstallment("Mercado*Mercadolivre - Parcela 2/3"), {
+        base: "Mercado*Mercadolivre",
+        index: 2,
+        total: 3,
+      });
+      assert.equal(parseInstallment("Mercado*Mercadolivre"), null);
+      assert.equal(parseInstallment("Loja - Parcela 4/3"), null);
+      const a = await prisma.account.create({
+        data: { name: "Notes test", type: "CHECKING" },
+      });
+      const card = (description, date, cents) =>
+        prisma.transaction.create({
+          data: {
+            description,
+            type: "EXPENSE",
+            occurredAt: new Date(`${date}T12:00:00Z`),
+            amountCents: cents,
+            sourceType: "CREDIT_CARD",
+            accountId: a.id,
+          },
+        });
+      const first = await card(
+        "Mercado*Mercadolivre - Parcela 1/3",
+        "2026-09-23",
+        18334n,
+      );
+      const second = await card(
+        "Mercado*Mercadolivre - Parcela 2/3",
+        "2026-10-22",
+        18333n,
+      );
+      const third = await card(
+        "Mercado*Mercadolivre - Parcela 3/3",
+        "2026-11-22",
+        18333n,
+      );
+      // Different amount and different purchase count are not the same purchase.
+      const otherAmount = await card(
+        "Mercado*Mercadolivre - Parcela 3/3",
+        "2026-11-22",
+        9900n,
+      );
+      const otherCount = await card(
+        "Mercado*Mercadolivre - Parcela 1/2",
+        "2026-09-23",
+        18334n,
+      );
+      const all = [first, second, third, otherAmount, otherCount];
+      assert.deepEqual(
+        matchInstallments(second, all).map((row) => row.id),
+        [first.id, third.id],
+      );
+      // Two equal candidates for the same installment are ambiguous.
+      const twin = await card(
+        "Mercado*Mercadolivre - Parcela 3/3",
+        "2026-11-23",
+        18333n,
+      );
+      assert.deepEqual(
+        matchInstallments(second, [...all, twin]).map((row) => row.id),
+        [first.id],
+      );
+      await prisma.transaction.delete({ where: { id: twin.id } });
+
+      const fields = {
+        description: second.description,
+        date: "2026-10-22",
+        amount: "183.33",
+        type: "EXPENSE",
+        categoryId: "",
+        accountId: a.id,
+        note: "  Presente para o irmão  ",
+      };
+      const withInstallments = form(fields);
+      withInstallments.append("installmentIds", first.id);
+      withInstallments.append("installmentIds", third.id);
+      await redirected(
+        () => transactions.updateTransaction(second.id, withInstallments),
+        "sucesso=atualizada",
+      );
+      const notes = await prisma.transaction.findMany({
+        where: { accountId: a.id },
+        orderBy: { createdAt: "asc" },
+        select: { note: true, description: true },
+      });
+      assert.deepEqual(
+        notes.map((row) => row.note),
+        [
+          "Presente para o irmão",
+          "Presente para o irmão",
+          "Presente para o irmão",
+          null,
+          null,
+        ],
+      );
+      // Bank text is preserved for rules and reimports.
+      assert.equal(notes[1].description, "Mercado*Mercadolivre - Parcela 2/3");
+
+      const foreign = form({ ...fields, note: "Outra" });
+      foreign.append("installmentIds", otherAmount.id);
+      await redirected(
+        () => transactions.updateTransaction(second.id, foreign),
+        "erro=dados",
+      );
+      assert.equal(
+        (
+          await prisma.transaction.findUniqueOrThrow({
+            where: { id: otherAmount.id },
+          })
+        ).note,
+        null,
+      );
+      await redirected(
+        () =>
+          transactions.updateTransaction(
+            second.id,
+            form({ ...fields, note: "x".repeat(301) }),
+          ),
+        "erro=dados",
+      );
+
+      const document = JSON.parse(
+        backup.backupJson(await backup.createBackupObject()),
+      );
+      assert.equal(
+        document.data.transactions.find((row) => row.id === second.id).note,
+        "Presente para o irmão",
+      );
+      assert.equal(
+        backup
+          .parseBackup(JSON.stringify(document))
+          .data.transactions.find((row) => row.id === second.id).note,
+        "Presente para o irmão",
+      );
+      const invalid = JSON.parse(JSON.stringify(document));
+      invalid.data.transactions.find((row) => row.id === second.id).note = 42;
+      assert.equal(backup.parseBackup(JSON.stringify(invalid)), null);
+      for (const row of document.data.transactions) delete row.note;
+      assert.ok(
+        backup
+          .parseBackup(JSON.stringify(document))
+          .data.transactions.every((row) => row.note === null),
+      );
+    },
+  );
+  await t.test(
     "type labels and validation cover every transaction type",
     async () => {
       const {

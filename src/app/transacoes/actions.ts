@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { categoryType, isTransactionType } from "@/lib/transaction-types";
+import { findInstallmentSiblings } from "@/lib/installments";
 
 function readTransaction(formData: FormData, categoryRequired = false) {
   const description = String(formData.get("description") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim();
   const date = String(formData.get("date") ?? "");
   const amountText = String(formData.get("amount") ?? "").trim();
   const amountMatch = amountText.match(/^(\d{1,12})(?:[.,](\d{1,2}))?$/);
@@ -22,6 +24,7 @@ function readTransaction(formData: FormData, categoryRequired = false) {
   if (
     !description ||
     description.length > 300 ||
+    note.length > 300 ||
     !date ||
     amountCents <= 0n ||
     !Number.isFinite(occurredAt.getTime()) ||
@@ -33,6 +36,7 @@ function readTransaction(formData: FormData, categoryRequired = false) {
     return null;
   return {
     description,
+    note: note || null,
     occurredAt,
     amountCents,
     type,
@@ -71,8 +75,23 @@ export async function updateTransaction(id: string, formData: FormData) {
   const data = readTransaction(formData);
   if (!id || !data || !(await validReferences(data)))
     redirect("/transacoes?erro=dados");
+  const current = await prisma.transaction.findUnique({ where: { id } });
+  if (!current) redirect("/transacoes?erro=salvar");
+  // Only installments the server itself recognizes may receive the note.
+  const allowed = new Set(
+    (await findInstallmentSiblings(prisma, current)).map((row) => row.id),
+  );
+  const installmentIds = formData.getAll("installmentIds").map(String);
+  if (installmentIds.some((value) => !allowed.has(value)))
+    redirect(`/transacoes/${id}/editar?erro=dados`);
   try {
-    await prisma.transaction.update({ where: { id }, data });
+    await prisma.$transaction([
+      prisma.transaction.update({ where: { id }, data }),
+      prisma.transaction.updateMany({
+        where: { id: { in: installmentIds } },
+        data: { note: data.note },
+      }),
+    ]);
   } catch {
     redirect("/transacoes?erro=salvar");
   }

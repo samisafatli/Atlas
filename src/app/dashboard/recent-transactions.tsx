@@ -10,6 +10,7 @@ import {
 type RecentTransaction = {
   id: string;
   description: string;
+  note: string | null;
   amountCents: bigint;
   type: string;
   occurredAt: Date;
@@ -50,7 +51,7 @@ export function RecentTransactions({
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
-                  {transaction.description}
+                  {transaction.note ?? transaction.description}
                 </p>
                 <p className="mt-1 text-xs text-[var(--muted)]">
                   {new Intl.DateTimeFormat("pt-BR", {

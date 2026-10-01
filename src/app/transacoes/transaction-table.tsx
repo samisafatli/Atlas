@@ -19,6 +19,7 @@ type Row = {
   occurredAt: Date;
   categoryId: string | null;
   ownershipEstimated: boolean;
+  note: string | null;
   account: { name: string; currency: string };
 };
 
@@ -118,7 +119,16 @@ export function TransactionTable({
                   </time>
                 </td>
                 <td className="px-6 py-4 font-medium">
-                  <span>{transaction.description}</span>
+                  {transaction.note ? (
+                    <>
+                      <span>{transaction.note}</span>
+                      <span className="mt-1 block text-xs font-normal text-[var(--muted)]">
+                        {transaction.description}
+                      </span>
+                    </>
+                  ) : (
+                    <span>{transaction.description}</span>
+                  )}
                   <span className={"mt-1 block text-xs font-normal " + tone}>
                     {typeLabel}
                   </span>
@@ -169,7 +179,7 @@ export function TransactionTable({
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1">
                     <Link
-                      aria-label={`Editar “${transaction.description}”`}
+                      aria-label={`Editar “${transaction.note ?? transaction.description}”`}
                       className="grid size-9 place-items-center rounded-lg text-[var(--accent)] transition hover:bg-[#e9f0eb]"
                       href={`/transacoes/${transaction.id}/editar`}
                       title="Editar"
@@ -178,7 +188,7 @@ export function TransactionTable({
                     </Link>
                     <ConfirmDelete
                       id={transaction.id}
-                      description={transaction.description}
+                      description={transaction.note ?? transaction.description}
                     />
                   </div>
                 </td>

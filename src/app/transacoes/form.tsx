@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createTransaction, updateTransaction } from "./actions";
 import { categoryType, typeFormLabels } from "@/lib/transaction-types";
+import { formatCents } from "@/lib/finance-format";
 
 type Props = {
   categories: { id: string; name: string; type: string }[];
@@ -16,7 +17,16 @@ type Props = {
     categoryId: string | null;
     accountId: string;
     ownershipEstimated?: boolean;
+    note?: string | null;
   };
+  installments?: {
+    id: string;
+    index: number;
+    total: number;
+    occurredAt: Date;
+    amountCents: bigint;
+    note: string | null;
+  }[];
   error?: boolean;
   requireCategory?: boolean;
 };
@@ -25,6 +35,7 @@ export function TransactionForm({
   categories,
   accounts,
   transaction,
+  installments = [],
   error,
   requireCategory = false,
 }: Props) {
@@ -168,6 +179,44 @@ export function TransactionForm({
           ))}
         </select>
       </label>
+      <label className="grid gap-2 text-sm font-medium sm:col-span-2">
+        Observação (opcional)
+        <input
+          maxLength={300}
+          name="note"
+          defaultValue={transaction?.note ?? ""}
+          placeholder="Ex.: presente de aniversário"
+          className="min-h-11 rounded-lg border border-[var(--line)] px-3 font-normal"
+        />
+      </label>
+      {installments.length ? (
+        <fieldset className="grid gap-2 text-sm sm:col-span-2">
+          <legend className="mb-2 font-medium">
+            Aplicar a mesma observação também a:
+          </legend>
+          {installments.map((installment) => (
+            <label className="flex items-center gap-2" key={installment.id}>
+              <input
+                defaultChecked
+                name="installmentIds"
+                type="checkbox"
+                value={installment.id}
+              />
+              Parcela {installment.index}/{installment.total} ·{" "}
+              {new Intl.DateTimeFormat("pt-BR", {
+                dateStyle: "medium",
+                timeZone: "UTC",
+              }).format(installment.occurredAt)}{" "}
+              · {formatCents(installment.amountCents)}
+              {installment.note ? (
+                <span className="text-[var(--muted)]">
+                  (atual: {installment.note})
+                </span>
+              ) : null}
+            </label>
+          ))}
+        </fieldset>
+      ) : null}
       <div className="flex gap-3 sm:col-span-2">
         <button
           className="min-h-11 rounded-lg bg-[var(--foreground)] px-5 text-sm font-medium text-white"
