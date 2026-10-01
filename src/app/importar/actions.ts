@@ -12,6 +12,7 @@ import { matchCategoryRule, sortCategoryRules } from "@/lib/category-rules";
 import type { ImportedTransaction } from "@/lib/nubank-csv";
 import { categoryType, transactionTypes } from "@/lib/transaction-types";
 import { salaryCategory } from "@/lib/personal-rules";
+import { matchNameRule } from "@/lib/name-rules";
 
 type PreviewRow = ImportedTransaction;
 
@@ -91,6 +92,7 @@ export async function saveNubankImport(formData: FormData) {
         include: { category: true },
       }),
     );
+    const nameRules = await prisma.nameRule.findMany();
     await prisma.$transaction(async (tx) => {
       const importFiles = files.map((file) => ({
         ...file,
@@ -146,6 +148,7 @@ export async function saveNubankImport(formData: FormData) {
                 fingerprint,
                 sourceType: row.sourceType,
                 externalId: row.externalId,
+                note: matchNameRule(row.description, nameRules),
                 categoryId:
                   salaryIds.get(
                     salaryCategory(row.description, row.type, row.sourceType) ??

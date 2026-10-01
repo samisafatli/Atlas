@@ -1,6 +1,7 @@
 type CandidateTransaction = {
   id: string;
   description: string;
+  note: string | null;
   amountCents: bigint;
   occurredAt: Date;
   accountId: string;
@@ -23,13 +24,13 @@ function normalizeMerchant(description: string) {
 export function detectRecurringExpenses(transactions: CandidateTransaction[]) {
   const groups = new Map<string, CandidateTransaction[]>();
   for (const transaction of transactions) {
-    const merchant = normalizeMerchant(transaction.description);
+    // A note names the merchant across payment methods (Pix, boleto) whose
+    // bank texts differ; categories do not split a merchant's history.
+    const merchant = transaction.note
+      ? `note:${normalizeMerchant(transaction.note)}`
+      : normalizeMerchant(transaction.description);
     if (!merchant) continue;
-    const key = [
-      merchant,
-      transaction.accountId,
-      transaction.categoryId ?? "",
-    ].join("|");
+    const key = [merchant, transaction.accountId].join("|");
     groups.set(key, [...(groups.get(key) ?? []), transaction]);
   }
   return [...groups.values()]
@@ -68,11 +69,12 @@ export function detectRecurringExpenses(transactions: CandidateTransaction[]) {
         0n,
       );
       const monthlyEstimate = amountTotal / BigInt(compatible.length);
+      const latest = compatible[compatible.length - 1];
       return [
         {
-          description: compatible[0].description,
-          accountName: compatible[0].accountName,
-          categoryName: compatible[0].categoryName ?? "Sem categoria",
+          description: latest.note ?? latest.description,
+          accountName: latest.accountName,
+          categoryName: latest.categoryName ?? "Sem categoria",
           count: compatible.length,
           monthlyEstimate,
           transactions: compatible,

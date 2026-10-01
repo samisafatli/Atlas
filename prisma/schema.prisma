@@ -45,6 +45,15 @@ model CategoryRule {
   @@index([enabled])
 }
 
+// Display names for recurring merchants, stored as transaction notes.
+model NameRule {
+  id        String   @id @default(cuid())
+  contains  String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model AssetAccount {
   id          String               @id @default(cuid())
   name        String

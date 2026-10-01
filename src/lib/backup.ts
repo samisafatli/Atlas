@@ -15,6 +15,7 @@ type Reader = Pick<
   | "category"
   | "import"
   | "categoryRule"
+  | "nameRule"
   | "transaction"
   | "assetAccount"
   | "assetSnapshot"
@@ -27,6 +28,7 @@ async function readBackupData(client: Reader) {
     categories,
     imports,
     categoryRules,
+    nameRules,
     transactions,
     assetAccounts,
     assetSnapshots,
@@ -36,6 +38,7 @@ async function readBackupData(client: Reader) {
     client.category.findMany({ orderBy: { id: "asc" } }),
     client.import.findMany({ orderBy: { id: "asc" } }),
     client.categoryRule.findMany({ orderBy: { id: "asc" } }),
+    client.nameRule.findMany({ orderBy: { id: "asc" } }),
     client.transaction.findMany({ orderBy: { id: "asc" } }),
     client.assetAccount.findMany({ orderBy: { id: "asc" } }),
     client.assetSnapshot.findMany({ orderBy: { id: "asc" } }),
@@ -48,6 +51,7 @@ async function readBackupData(client: Reader) {
     categories,
     imports,
     categoryRules,
+    nameRules,
     transactions,
     assetAccounts,
     assetSnapshots,
@@ -118,6 +122,7 @@ export async function clearData(mode: "transactions" | "all") {
         await tx.assetSnapshot.deleteMany();
         await tx.assetAccount.deleteMany();
         await tx.categoryRule.deleteMany();
+        await tx.nameRule.deleteMany();
         await tx.category.deleteMany();
         await tx.account.deleteMany();
         await tx.account.create({ data: accountSeed });
@@ -146,6 +151,7 @@ type BackupData = {
     categoryId: string;
     enabled: boolean;
   })[];
+  nameRules: (Timed & { contains: string; name: string })[];
   transactions: (Timed & {
     description: string;
     amountCents: string;
@@ -211,11 +217,14 @@ export function parseBackup(contents: string): BackupDocument | null {
   )
     return null;
   const rawData = parsed.data;
+  // Backups exported before name rules existed have no such list.
+  rawData.nameRules ??= [];
   const keys = [
     "accounts",
     "categories",
     "imports",
     "categoryRules",
+    "nameRules",
     "transactions",
     "assetAccounts",
     "assetSnapshots",
@@ -281,6 +290,7 @@ export function parseBackup(contents: string): BackupDocument | null {
     "accounts",
     "categories",
     "categoryRules",
+    "nameRules",
     "transactions",
     "assetAccounts",
     "assetSnapshots",
@@ -306,6 +316,7 @@ export function parseBackup(contents: string): BackupDocument | null {
     !isUniqueBy(data.accounts, ["name", "type"]) ||
     !isUniqueBy(data.categories, ["name", "type"]) ||
     !isUniqueBy(data.categoryRules, ["contains", "categoryId"]) ||
+    !isUniqueBy(data.nameRules, ["contains"]) ||
     !isUniqueBy(data.assetAccounts, ["name", "institution"]) ||
     !isUniqueBy(data.assetSnapshots, ["snapshotDate"]) ||
     !isUniqueBy(data.assetSnapshotValues, ["snapshotId", "accountId"])
@@ -350,6 +361,18 @@ export function parseBackup(contents: string): BackupDocument | null {
         !row.contains.trim() ||
         !categoryIds.has(String(row.categoryId)) ||
         typeof row.enabled !== "boolean",
+    )
+  )
+    return null;
+  if (
+    data.nameRules.some(
+      (row) =>
+        typeof row.contains !== "string" ||
+        !row.contains.trim() ||
+        row.contains.length > 100 ||
+        typeof row.name !== "string" ||
+        !row.name.trim() ||
+        row.name.length > 100,
     )
   )
     return null;
@@ -462,6 +485,7 @@ export async function restoreBackup(document: BackupDocument) {
       await tx.assetAccount.deleteMany();
       await tx.transaction.deleteMany();
       await tx.categoryRule.deleteMany();
+      await tx.nameRule.deleteMany();
       await tx.import.deleteMany();
       await tx.category.deleteMany();
       await tx.account.deleteMany();
@@ -507,6 +531,16 @@ export async function restoreBackup(document: BackupDocument) {
           updatedAt: new Date(String(row.updatedAt)),
         })),
         (batch) => tx.categoryRule.createMany({ data: batch }),
+      );
+      await insertBatches(
+        data.nameRules.map((row) => ({
+          id: row.id,
+          contains: row.contains,
+          name: row.name,
+          createdAt: new Date(String(row.createdAt)),
+          updatedAt: new Date(String(row.updatedAt)),
+        })),
+        (batch) => tx.nameRule.createMany({ data: batch }),
       );
       await insertBatches(
         data.transactions.map((row) => ({

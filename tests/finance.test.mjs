@@ -1594,6 +1594,147 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
     },
   );
   await t.test(
+    "name rules fill empty notes, imports and recurring groups",
+    async () => {
+      const { matchNameRule } = await import("../src/lib/name-rules.ts");
+      const { saveNameRule, deleteNameRule } =
+        await import("../src/app/regras/actions.ts");
+      assert.equal(
+        matchNameRule("Pagamento de boleto efetuado - ZZLUZ SERV ELETR", [
+          { contains: "zzluz", name: "Luz" },
+          { contains: "ZZLUZ SERV", name: "Luz boleto" },
+        ]),
+        "Luz boleto",
+      );
+      assert.equal(
+        matchNameRule("Outra coisa", [{ contains: "x1", name: "X" }]),
+        null,
+      );
+      const a = await prisma.account.create({
+        data: { name: "Name rules test", type: "CHECKING" },
+      });
+      const row = (description, date, note = null) =>
+        prisma.transaction.create({
+          data: {
+            description,
+            note,
+            type: "EXPENSE",
+            occurredAt: new Date(`${date}T12:00:00Z`),
+            amountCents: 20000n,
+            sourceType: "BANK_STATEMENT",
+            accountId: a.id,
+          },
+        });
+      const pix = await row(
+        "Transferência enviada pelo Pix - ZZLUZ SERVICOS DE ELETRICIDADE S A - 60.444.437",
+        "2026-01-05",
+      );
+      const boleto = await row(
+        "Pagamento de boleto efetuado - ZZLUZ SERV ELETR REG",
+        "2026-02-05",
+      );
+      const manual = await row(
+        "Pagamento de boleto efetuado - ZZLUZ SERV ELETRICIDADE",
+        "2026-03-05",
+        "Conta antiga da casa",
+      );
+      await redirected(
+        () => saveNameRule(form({ contains: "zzluz", name: "Luz" })),
+        "sucesso=salva",
+      );
+      await redirected(
+        () => saveNameRule(form({ contains: "ZZLUZ", name: "Outro" })),
+        "erro=nomeDuplicado",
+      );
+      await redirected(
+        () => saveNameRule(form({ contains: "zzvazio", name: " " })),
+        "erro=nome",
+      );
+      const stored = await prisma.transaction.findMany({
+        where: { id: { in: [pix.id, boleto.id, manual.id] } },
+        orderBy: { occurredAt: "asc" },
+      });
+      assert.deepEqual(
+        stored.map((item) => item.note),
+        ["Luz", "Luz", "Conta antiga da casa"],
+      );
+
+      await redirected(
+        () =>
+          saveNubankImport(
+            form({
+              filename: "nomes.csv",
+              accountId: a.id,
+              transactions: JSON.stringify([
+                {
+                  date: "2026-04-05",
+                  description: "Transferência enviada pelo Pix - ZZLUZ",
+                  amountCents: "20000",
+                  type: "EXPENSE",
+                  sourceType: "BANK_STATEMENT",
+                  externalId: "zzluz-abril",
+                },
+              ]),
+            }),
+          ),
+        "quantidade=1",
+      );
+      const imported = await prisma.transaction.findFirstOrThrow({
+        where: { externalId: "zzluz-abril" },
+      });
+      assert.equal(imported.note, "Luz");
+      assert.equal(
+        imported.description,
+        "Transferência enviada pelo Pix - ZZLUZ",
+      );
+
+      // Different bank texts with the same name are one recurring merchant.
+      const all = await prisma.transaction.findMany({
+        where: { accountId: a.id },
+        include: { account: true, category: true },
+      });
+      const detected = detectRecurringExpenses(
+        all.map((item) => ({
+          ...item,
+          note: item.id === manual.id ? "Luz" : item.note,
+          accountName: item.account.name,
+          categoryName: item.category?.name ?? null,
+        })),
+      );
+      assert.equal(detected.length, 1);
+      assert.equal(detected[0].description, "Luz");
+      assert.equal(detected[0].count, 4);
+
+      const document = JSON.parse(
+        backup.backupJson(await backup.createBackupObject()),
+      );
+      assert.ok(document.data.nameRules.some((rule) => rule.name === "Luz"));
+      const parsed = backup.parseBackup(JSON.stringify(document));
+      assert.ok(
+        parsed.data.nameRules.some((rule) => rule.contains === "zzluz"),
+      );
+      delete document.data.nameRules;
+      assert.deepEqual(
+        backup.parseBackup(JSON.stringify(document)).data.nameRules,
+        [],
+      );
+
+      const rule = await prisma.nameRule.findUniqueOrThrow({
+        where: { contains: "zzluz" },
+      });
+      await redirected(
+        () => deleteNameRule(form({ id: rule.id })),
+        "sucesso=excluida",
+      );
+      // Notes already written stay as user data.
+      assert.equal(
+        (await prisma.transaction.findUniqueOrThrow({ where: { id: pix.id } }))
+          .note,
+        "Luz",
+      );
+    },
+  );
+  await t.test(
     "type labels and validation cover every transaction type",
     async () => {
       const {

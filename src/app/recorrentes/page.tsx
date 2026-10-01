@@ -20,6 +20,7 @@ export default async function RecurringPage() {
     expenses.map((item) => ({
       id: item.id,
       description: item.description,
+      note: item.note,
       amountCents: item.amountCents,
       occurredAt: item.occurredAt,
       accountId: item.accountId,
