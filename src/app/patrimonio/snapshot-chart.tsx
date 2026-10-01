@@ -2,6 +2,25 @@ import { formatCents } from "@/lib/finance-format";
 
 type Point = { snapshotDate: Date; totalCents: bigint };
 
+// Positioned in percent of the chart box, matching the SVG's viewBox.
+function Dot({
+  label,
+  left,
+  top,
+}: {
+  label: string;
+  left: number;
+  top: number;
+}) {
+  return (
+    <span
+      className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"
+      style={{ left: `${left}%`, top: `${top}%` }}
+      title={label}
+    />
+  );
+}
+
 export function SnapshotChart({ snapshots }: { snapshots: Point[] }) {
   if (snapshots.length === 0)
     return (
@@ -20,18 +39,25 @@ export function SnapshotChart({ snapshots }: { snapshots: Point[] }) {
           }).format(snapshots[0].snapshotDate)}{" "}
           · {formatCents(snapshots[0].totalCents)}
         </p>
-        <svg
+        <div
           aria-label="Gráfico de patrimônio com um snapshot"
-          className="mt-5 h-24 w-full"
+          className="relative mt-5 h-24"
           role="img"
-          viewBox="0 0 600 100"
-          preserveAspectRatio="none"
         >
-          <circle cx="300" cy="50" r="7" fill="var(--accent)">
-            <title>{formatCents(snapshots[0].totalCents)}</title>
-          </circle>
-          <line x1="0" y1="90" x2="600" y2="90" stroke="var(--line)" />
-        </svg>
+          <svg
+            aria-hidden="true"
+            className="absolute inset-0 size-full"
+            viewBox="0 0 600 100"
+            preserveAspectRatio="none"
+          >
+            <line x1="0" y1="90" x2="600" y2="90" stroke="var(--line)" />
+          </svg>
+          <Dot
+            label={formatCents(snapshots[0].totalCents)}
+            left={50}
+            top={50}
+          />
+        </div>
       </div>
     );
   const max = snapshots.reduce(
@@ -51,39 +77,39 @@ export function SnapshotChart({ snapshots }: { snapshots: Point[] }) {
   const pointString = points.map((point) => `${point.x},${point.y}`).join(" ");
   return (
     <div className="rounded-xl bg-surface-2 p-3">
-      <svg
+      <div
         aria-label="Evolução do patrimônio total"
-        className="h-64 w-full"
+        className="relative h-64"
         role="img"
-        viewBox="0 0 600 110"
-        preserveAspectRatio="none"
       >
-        <line x1="0" y1="95" x2="600" y2="95" stroke="var(--line)" />
-        <polyline
-          fill="none"
-          points={pointString}
-          stroke="var(--accent)"
-          strokeWidth="3"
-          vectorEffect="non-scaling-stroke"
-        />
+        {/* The stretched SVG draws only lines; dots sit on top so they stay round. */}
+        <svg
+          aria-hidden="true"
+          className="absolute inset-0 size-full"
+          viewBox="0 0 600 110"
+          preserveAspectRatio="none"
+        >
+          <line x1="0" y1="95" x2="600" y2="95" stroke="var(--line)" />
+          <polyline
+            fill="none"
+            points={pointString}
+            stroke="var(--accent)"
+            strokeWidth="3"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
         {points.map((point) => (
-          <circle
+          <Dot
             key={point.snapshotDate.toISOString()}
-            cx={point.x}
-            cy={point.y}
-            r="5"
-            fill="var(--accent)"
-          >
-            <title>
-              {new Intl.DateTimeFormat("pt-BR", {
-                dateStyle: "medium",
-                timeZone: "UTC",
-              }).format(point.snapshotDate)}
-              : {formatCents(point.totalCents)}
-            </title>
-          </circle>
+            label={`${new Intl.DateTimeFormat("pt-BR", {
+              dateStyle: "medium",
+              timeZone: "UTC",
+            }).format(point.snapshotDate)}: ${formatCents(point.totalCents)}`}
+            left={(point.x / 600) * 100}
+            top={(point.y / 110) * 100}
+          />
         ))}
-      </svg>
+      </div>
       <div className="mt-2 flex justify-between gap-3 text-xs text-[var(--muted)]">
         {[points[0], points[points.length - 1]].map((point) => (
           <span key={point.snapshotDate.toISOString()}>

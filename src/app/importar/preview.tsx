@@ -218,7 +218,7 @@ export function ImportPreview() {
           Cancelar
         </Link>
         <button
-          className="min-h-11 rounded-lg bg-[var(--foreground)] hover:bg-accent px-5 text-sm font-medium text-on-accent disabled:opacity-50"
+          className="min-h-11 rounded-lg bg-[var(--foreground)] enabled:hover:bg-accent px-5 text-sm font-medium text-on-accent disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-[var(--muted)]"
           disabled={loading || !files.length}
           onClick={continueImport}
           type="button"
