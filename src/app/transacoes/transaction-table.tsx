@@ -112,7 +112,10 @@ export function TransactionTable({
             const amountSign = transactionSign(transaction.type);
 
             return (
-              <tr key={transaction.id}>
+              <tr
+                className="transition-colors duration-150 hover:bg-[var(--row-hover)]"
+                key={transaction.id}
+              >
                 <td className="whitespace-nowrap px-6 py-4 text-[var(--muted)]">
                   <time dateTime={transaction.occurredAt.toISOString()}>
                     {dateFormat.format(transaction.occurredAt)}
