@@ -1,4 +1,4 @@
-import type { prisma } from "./prisma";
+import type { prisma } from "./prisma-client";
 
 type NameRule = { contains: string; name: string };
 

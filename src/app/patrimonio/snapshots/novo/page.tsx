@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { AssetSnapshotForm } from "../../snapshot-form";
 import { PageShell } from "@/app/page-shell";
 
 export default async function NewSnapshotPage() {
+  const prisma = await getPrisma();
   const accounts = await prisma.assetAccount.findMany({
     orderBy: [{ institution: "asc" }, { name: "asc" }],
   });

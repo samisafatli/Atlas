@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { categoryType, isTransactionType } from "@/lib/transaction-types";
 import { findInstallmentSiblings } from "@/lib/installments";
 
@@ -48,6 +48,7 @@ function readTransaction(formData: FormData, categoryRequired = false) {
 async function validReferences(
   data: NonNullable<ReturnType<typeof readTransaction>>,
 ) {
+  const prisma = await getPrisma();
   const [account, category] = await Promise.all([
     prisma.account.findUnique({ where: { id: data.accountId } }),
     data.categoryId
@@ -62,6 +63,7 @@ async function validReferences(
 }
 
 export async function createTransaction(formData: FormData) {
+  const prisma = await getPrisma();
   const data = readTransaction(formData, true);
   if (!data || !(await validReferences(data)))
     redirect("/transacoes?erro=dados");
@@ -72,6 +74,7 @@ export async function createTransaction(formData: FormData) {
 }
 
 export async function updateTransaction(id: string, formData: FormData) {
+  const prisma = await getPrisma();
   const data = readTransaction(formData);
   if (!id || !data || !(await validReferences(data)))
     redirect("/transacoes?erro=dados");
@@ -101,6 +104,7 @@ export async function updateTransaction(id: string, formData: FormData) {
 }
 
 export async function deleteTransaction(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   if (!id) redirect("/transacoes?erro=excluir");
   try {
@@ -117,6 +121,7 @@ export async function updateTransactionCategory(
   id: string,
   formData: FormData,
 ) {
+  const prisma = await getPrisma();
   const categoryId = String(formData.get("categoryId") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "/transacoes");
   const safeReturnTo = returnTo.startsWith("/transacoes")

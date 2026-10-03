@@ -1,4 +1,4 @@
-import { prisma } from "./prisma";
+import { prisma } from "./prisma-client";
 import { createBackupObject, backupJson, saveProtectionBackup } from "./backup";
 import { isDebitPurchaseRefund, categoryType } from "./transaction-types";
 import { matchCategoryRule, sortCategoryRules } from "./category-rules";

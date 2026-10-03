@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 
 const assetTypes = [
   "CHECKING",
@@ -15,6 +15,7 @@ const assetTypes = [
 ];
 
 export async function saveAssetAccount(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const institution = String(formData.get("institution") ?? "").trim();
@@ -38,6 +39,7 @@ export async function saveAssetAccount(formData: FormData) {
 }
 
 export async function deleteAssetAccount(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   try {
     if (id) await prisma.assetAccount.delete({ where: { id } });
@@ -57,6 +59,7 @@ function parseAmount(value: string) {
 }
 
 export async function saveAssetSnapshot(id: string, formData: FormData) {
+  const prisma = await getPrisma();
   const rawDate = String(formData.get("snapshotDate") ?? "");
   const dateMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const snapshotDate = dateMatch ? new Date(`${rawDate}T00:00:00.000Z`) : null;
@@ -112,6 +115,7 @@ export async function saveAssetSnapshot(id: string, formData: FormData) {
 }
 
 export async function deleteAssetSnapshot(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   if (id) await prisma.assetSnapshot.delete({ where: { id } });
   revalidatePath("/patrimonio");

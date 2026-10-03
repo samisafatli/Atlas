@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { applyNameRules } from "@/lib/name-rules";
 
 export async function saveCategoryRule(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   const contains = String(formData.get("contains") ?? "")
     .trim()
@@ -35,6 +36,7 @@ export async function saveCategoryRule(formData: FormData) {
 }
 
 export async function deleteCategoryRule(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   if (id) await prisma.categoryRule.delete({ where: { id } });
   revalidatePath("/regras");
@@ -42,6 +44,7 @@ export async function deleteCategoryRule(formData: FormData) {
 }
 
 export async function saveNameRule(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   const contains = String(formData.get("contains") ?? "")
     .trim()
@@ -80,6 +83,7 @@ export async function saveNameRule(formData: FormData) {
 }
 
 export async function deleteNameRule(formData: FormData) {
+  const prisma = await getPrisma();
   const id = String(formData.get("id") ?? "");
   if (id) await prisma.nameRule.delete({ where: { id } });
   revalidatePath("/regras");

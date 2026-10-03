@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Settings } from "lucide-react";
+import { profiles, type ProfileId } from "@/lib/profiles";
+import { switchProfile } from "./profile-actions";
 
 const links = [
   ["/dashboard", "Dashboard"],
@@ -73,18 +75,49 @@ function SettingsMenu({ pathname }: { pathname: string }) {
   );
 }
 
-export function AppHeader() {
+// Each profile has its own database; switching reloads from the dashboard.
+function ProfileSwitch({ current }: { current: ProfileId }) {
+  return (
+    <form
+      action={switchProfile}
+      aria-label="Perfil"
+      className="flex w-fit gap-1 rounded-xl border border-[var(--line)] p-1"
+    >
+      {profiles.map((profile) => {
+        const active = profile.id === current;
+        return (
+          <button
+            aria-pressed={active}
+            className={`min-h-9 rounded-lg px-3 text-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${active ? "bg-surface-3 font-medium text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
+            disabled={active}
+            key={profile.id}
+            name="profile"
+            type="submit"
+            value={profile.id}
+          >
+            {profile.name}
+          </button>
+        );
+      })}
+    </form>
+  );
+}
+
+export function AppHeader({ profile }: { profile: ProfileId }) {
   const pathname = usePathname();
   return (
     <header className="border-b border-[var(--line)] bg-[var(--background)]">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
-        <Link
-          href="/dashboard"
-          aria-label="Atlas — Dashboard"
-          className="w-fit rounded text-base font-bold tracking-tight text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-4"
-        >
-          Atlas
-        </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/dashboard"
+            aria-label="Atlas — Dashboard"
+            className="w-fit rounded text-base font-bold tracking-tight text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-4"
+          >
+            Atlas
+          </Link>
+          <ProfileSwitch current={profile} />
+        </div>
         <nav aria-label="Navegação principal" className="flex flex-wrap gap-1">
           {links.map(([href, label]) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);

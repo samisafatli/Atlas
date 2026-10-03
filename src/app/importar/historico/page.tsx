@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { sourceLabels } from "@/lib/nubank-csv";
 import { PageShell } from "@/app/page-shell";
 export const dynamic = "force-dynamic";
 
 export default async function ImportHistoryPage() {
+  const prisma = await getPrisma();
   const imports = await prisma.import.findMany({
     orderBy: { importedAt: "desc" },
   });

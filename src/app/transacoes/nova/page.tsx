@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { TransactionForm } from "../form";
 import { PageShell } from "@/app/page-shell";
 
@@ -8,6 +8,7 @@ export default async function NewTransactionPage({
 }: {
   searchParams: Promise<{ erro?: string }>;
 }) {
+  const prisma = await getPrisma();
   const [categories, accounts, params] = await Promise.all([
     prisma.category.findMany({ orderBy: { name: "asc" } }),
     prisma.account.findMany({ orderBy: { name: "asc" } }),

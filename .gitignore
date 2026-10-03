@@ -20,6 +20,11 @@
 /finance.db-journal
 /finance.db-shm
 /finance.db-wal
+# Profile databases (finance-<profile>.db) hold personal data too.
+/finance-*.db
+/finance-*.db-journal
+/finance-*.db-shm
+/finance-*.db-wal
 /backups/
 
 # Generated Prisma client

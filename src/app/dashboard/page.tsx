@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { getMonthRange, shiftMonth } from "@/lib/finance-format";
 import { OverviewCards } from "./overview-cards";
 import { SpendingCalendar } from "./spending-calendar";
@@ -36,6 +36,7 @@ export default async function DashboardPage({
     dia?: string | string[];
   }>;
 }) {
+  const prisma = await getPrisma();
   const query = await searchParams;
   const requestedMonth = first(query.month);
   const requestedDay = first(query.dia);

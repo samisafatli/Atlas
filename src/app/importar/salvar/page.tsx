@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { SaveImportForm } from "../save-form";
 import { PageShell } from "@/app/page-shell";
 
 export const dynamic = "force-dynamic";
 
 export default async function SaveImportPage() {
+  const prisma = await getPrisma();
   const accounts = await prisma.account.findMany({ orderBy: { name: "asc" } });
   return (
     <PageShell width="narrow">

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import {
   deleteCategoryRule,
   deleteNameRule,
@@ -12,6 +12,7 @@ export default async function CategoryRulesPage({
 }: {
   searchParams: Promise<{ erro?: string; sucesso?: string }>;
 }) {
+  const prisma = await getPrisma();
   const [categories, rules, nameRules, query] = await Promise.all([
     prisma.category.findMany({ orderBy: [{ type: "asc" }, { name: "asc" }] }),
     prisma.categoryRule.findMany({

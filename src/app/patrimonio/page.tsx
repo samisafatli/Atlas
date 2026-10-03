@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { formatCents } from "@/lib/finance-format";
 import { saveAssetAccount, deleteAssetAccount } from "./actions";
 import { SnapshotChart } from "./snapshot-chart";
@@ -21,6 +21,7 @@ export default async function AssetsPage({
 }: {
   searchParams: Promise<{ erro?: string; sucesso?: string }>;
 }) {
+  const prisma = await getPrisma();
   const [accounts, snapshots, query] = await Promise.all([
     prisma.assetAccount.findMany({
       orderBy: [{ institution: "asc" }, { name: "asc" }],

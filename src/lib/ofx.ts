@@ -1,4 +1,8 @@
-import { bankTransactionType, type ImportedTransaction } from "./nubank-csv";
+import {
+  bankTransactionType,
+  type ImportedTransaction,
+  type ParseOptions,
+} from "./nubank-csv";
 
 function field(block: string, tag: string) {
   const values = [...block.matchAll(new RegExp(`<${tag}\\s*>([^<]*)`, "gi"))];
@@ -39,7 +43,10 @@ export function decodeOfx(buffer: ArrayBuffer): string {
   }).decode(buffer);
 }
 
-export function parseOfx(contents: string): ImportedTransaction[] {
+export function parseOfx(
+  contents: string,
+  { personalRules = true }: ParseOptions = {},
+): ImportedTransaction[] {
   if (/<!DOCTYPE|<!ENTITY|<CORRECTFITID\b/i.test(contents))
     throw new Error(
       "OFX com entidades ou correções de lançamentos não é suportado.",
@@ -115,7 +122,7 @@ export function parseOfx(contents: string): ImportedTransaction[] {
       date,
       description,
       amountCents: absolute.toString(),
-      type: bankTransactionType(description, signed),
+      type: bankTransactionType(description, signed, personalRules),
       sourceType: "BANK_STATEMENT",
       externalId,
     };

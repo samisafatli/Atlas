@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { AssetSnapshotForm } from "../../../snapshot-form";
 import { PageShell } from "@/app/page-shell";
 
@@ -9,6 +9,7 @@ export default async function EditSnapshotPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const prisma = await getPrisma();
   const { id } = await params;
   const [snapshot, accounts] = await Promise.all([
     prisma.assetSnapshot.findUnique({

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { getMonthRange } from "@/lib/finance-format";
 import {
   categoryType,
@@ -46,6 +46,7 @@ function monthFilterRange(value: string) {
 export default async function TransactionsPage({
   searchParams,
 }: TransactionsPageProps) {
+  const prisma = await getPrisma();
   const params = await searchParams;
   const requestedMonth = firstValue(params.month) ?? "";
   const requestedDay = firstValue(params.dia) ?? "";

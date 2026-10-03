@@ -1,4 +1,4 @@
-import { prisma } from "./prisma";
+import { prisma } from "./prisma-client";
 import { backupJson, createBackupObject, saveProtectionBackup } from "./backup";
 import { rdbTransactionType } from "./transaction-types";
 import { transactionFingerprint } from "./transaction-fingerprint";

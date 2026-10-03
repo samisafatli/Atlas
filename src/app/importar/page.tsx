@@ -1,5 +1,6 @@
 import { ImportPreview } from "./preview";
 import { PageShell } from "@/app/page-shell";
+import { currentProfile } from "@/lib/prisma";
 
 export const metadata = {
   description:
@@ -12,6 +13,7 @@ export default async function ImportPage({
   searchParams: Promise<{ erro?: string }>;
 }) {
   const { erro } = await searchParams;
+  const { personalRules } = await currentProfile();
   return (
     <PageShell width="wide">
       <section>
@@ -19,7 +21,7 @@ export default async function ImportPage({
           Prévia do arquivo do Nubank
         </h1>
 
-        <ImportPreview />
+        <ImportPreview personalRules={personalRules} />
         {erro ? (
           <p
             className="mt-4 rounded-lg bg-neg-soft p-4 text-sm text-neg"

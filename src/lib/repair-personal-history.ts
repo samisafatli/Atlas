@@ -1,4 +1,4 @@
-import { prisma } from "./prisma";
+import { prisma } from "./prisma-client";
 import { backupJson, createBackupObject, saveProtectionBackup } from "./backup";
 import {
   motherTransactionType,

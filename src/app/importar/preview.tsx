@@ -20,7 +20,7 @@ function formatAmount(cents: string) {
   }).format(Number(cents) / 100);
 }
 
-export function ImportPreview() {
+export function ImportPreview({ personalRules }: { personalRules: boolean }) {
   const router = useRouter();
   const [files, setFiles] = useState<
     { filename: string; transactions: ImportedTransaction[] }[]
@@ -56,8 +56,8 @@ export function ImportPreview() {
         if (!/\.(csv|ofx)$/i.test(file.name))
           throw new Error("Formato inválido. Use CSV ou OFX.");
         const entries = file.name.toLowerCase().endsWith(".ofx")
-          ? parseOfx(decodeOfx(await file.arrayBuffer()))
-          : parseNubankCsv(await file.text());
+          ? parseOfx(decodeOfx(await file.arrayBuffer()), { personalRules })
+          : parseNubankCsv(await file.text(), { personalRules });
         if (!entries.length) throw new Error("Nenhum lançamento encontrado.");
         total += entries.length;
         if (total > 50000)

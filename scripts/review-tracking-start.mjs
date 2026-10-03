@@ -2,6 +2,12 @@ import "dotenv/config";
 import { registerHooks } from "node:module";
 registerHooks({
   resolve(specifier, context, nextResolve) {
+    // Scripts run outside a request: no profile cookie, so the owner's base.
+    if (specifier === "next/headers")
+      return {
+        url: "data:text/javascript,export async function cookies() { return { get() {} }; }",
+        shortCircuit: true,
+      };
     if (specifier === "server-only")
       return { url: "data:text/javascript,export{}", shortCircuit: true };
     if (specifier.startsWith("@/"))

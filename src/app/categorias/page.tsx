@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { deleteCategory, saveCategory } from "./actions";
 import { PageShell } from "@/app/page-shell";
 
@@ -13,6 +13,7 @@ export default async function CategoriesPage({
 }: {
   searchParams: Promise<{ erro?: string; sucesso?: string }>;
 }) {
+  const prisma = await getPrisma();
   const [query, categories] = await Promise.all([
     searchParams,
     prisma.category.findMany({

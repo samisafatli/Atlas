@@ -2,7 +2,7 @@
 
 import { salaryCategory } from "@/lib/personal-rules";
 
-import { prisma } from "@/lib/prisma";
+import { currentProfile, getPrisma } from "@/lib/prisma";
 import {
   transactionFingerprint,
   withImportOccurrences,
@@ -18,6 +18,11 @@ export async function countImportDuplicates(
   input: Candidate[] | Candidate[][],
   accountId: string,
 ) {
+  const prisma = await getPrisma();
+  // Salary categories are the owner's arrangements, not bank semantics.
+  const { personalRules } = await currentProfile();
+  const salaryFor = (description: string, type: string, sourceType: string) =>
+    personalRules ? salaryCategory(description, type, sourceType) : null;
   const files: Candidate[][] = Array.isArray(input[0])
     ? (input as Candidate[][])
     : [input as Candidate[]];
@@ -66,7 +71,7 @@ export async function countImportDuplicates(
         categoryType(transaction.type) ?? "TRANSFER",
         rules,
       );
-      const salary = salaryCategory(
+      const salary = salaryFor(
         transaction.description,
         transaction.type,
         transaction.sourceType,

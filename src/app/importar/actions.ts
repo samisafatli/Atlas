@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { currentProfile, getPrisma } from "@/lib/prisma";
 import {
   transactionFingerprint,
   withImportOccurrences,
@@ -17,6 +17,11 @@ import { matchNameRule } from "@/lib/name-rules";
 type PreviewRow = ImportedTransaction;
 
 export async function saveNubankImport(formData: FormData) {
+  const prisma = await getPrisma();
+  // Salary categories are the owner's arrangements, not bank semantics.
+  const { personalRules } = await currentProfile();
+  const salaryFor = (description: string, type: string, sourceType: string) =>
+    personalRules ? salaryCategory(description, type, sourceType) : null;
   const filename = String(formData.get("filename") ?? "").trim();
   const accountId = String(formData.get("accountId") ?? "");
   let files: { filename: string; transactions: PreviewRow[] }[];
@@ -104,9 +109,7 @@ export async function saveNubankImport(formData: FormData) {
       const salaryIds = new Map<string, string>();
       for (const name of new Set(
         rows
-          .map((row) =>
-            salaryCategory(row.description, row.type, row.sourceType),
-          )
+          .map((row) => salaryFor(row.description, row.type, row.sourceType))
           .filter((name) => name !== null),
       )) {
         const category = await tx.category.upsert({
@@ -151,8 +154,7 @@ export async function saveNubankImport(formData: FormData) {
                 note: matchNameRule(row.description, nameRules),
                 categoryId:
                   salaryIds.get(
-                    salaryCategory(row.description, row.type, row.sourceType) ??
-                      "",
+                    salaryFor(row.description, row.type, row.sourceType) ?? "",
                   ) ??
                   matchedCategory?.category.id ??
                   null,

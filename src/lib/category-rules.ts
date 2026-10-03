@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 
 type Rule = {
   id: string;
@@ -37,6 +37,7 @@ export function matchCategoryRule(
 }
 
 export async function findCategoryByRule(description: string, type: string) {
+  const prisma = await getPrisma();
   const rules = await prisma.categoryRule.findMany({
     where: { enabled: true, category: { type } },
     include: { category: true },

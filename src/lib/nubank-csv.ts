@@ -54,12 +54,18 @@ function normalizeHeader(header: string) {
     .toLowerCase();
 }
 
+// Profiles other than the owner's parse without his personal arrangements.
+export type ParseOptions = { personalRules?: boolean };
+
 export function bankTransactionType(
   description: string,
   amount: bigint,
+  personalRules = true,
 ): TransactionType {
   if (amount > 0n && isDebitPurchaseRefund(description)) return "REFUND";
-  const mother = motherTransactionType(description, amount < 0n);
+  const mother = personalRules
+    ? motherTransactionType(description, amount < 0n)
+    : null;
   if (mother) return mother;
   const investment = rdbTransactionType(description, amount < 0n);
   if (investment) return investment;
@@ -110,7 +116,10 @@ function parseAmount(value: string) {
   return amount * (negative ? -1n : 1n);
 }
 
-export function parseNubankCsv(contents: string): ImportedTransaction[] {
+export function parseNubankCsv(
+  contents: string,
+  { personalRules = true }: ParseOptions = {},
+): ImportedTransaction[] {
   const [headers, ...rows] = parseRows(contents);
   if (!headers) throw new Error("O arquivo CSV está vazio.");
   const normalized = headers.map(normalizeHeader);
@@ -168,7 +177,7 @@ export function parseNubankCsv(contents: string): ImportedTransaction[] {
           : normalizedDescription === "pagamento recebido"
             ? "TRANSFER"
             : "REFUND"
-        : bankTransactionType(description, amount);
+        : bankTransactionType(description, amount, personalRules);
     return {
       date,
       description,

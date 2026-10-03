@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { TransactionForm } from "../../form";
 import { PageShell } from "@/app/page-shell";
 import { findInstallmentSiblings } from "@/lib/installments";
@@ -12,6 +12,7 @@ export default async function EditTransactionPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
+  const prisma = await getPrisma();
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const [transaction, categories, accounts] = await Promise.all([
     prisma.transaction.findUnique({ where: { id } }),

@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 
 function refreshCategories() {
   revalidatePath("/", "layout");
 }
 
 export async function saveCategory(form: FormData) {
+  const prisma = await getPrisma();
   const id = String(form.get("id") ?? "");
   const name = String(form.get("name") ?? "")
     .trim()
@@ -46,6 +47,7 @@ export async function saveCategory(form: FormData) {
 }
 
 export async function deleteCategory(form: FormData) {
+  const prisma = await getPrisma();
   const id = String(form.get("id") ?? "");
   if (!id || form.get("confirm") !== "on")
     redirect("/categorias?erro=confirmacao");

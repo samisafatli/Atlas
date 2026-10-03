@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { formatCents } from "@/lib/finance-format";
 import { detectRecurringExpenses } from "./recurrence";
 import { PageShell } from "@/app/page-shell";
@@ -7,6 +7,7 @@ import { PageShell } from "@/app/page-shell";
 export const dynamic = "force-dynamic";
 
 export default async function RecurringPage() {
+  const prisma = await getPrisma();
   const now = new Date();
   const start = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1),

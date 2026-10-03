@@ -1,7 +1,8 @@
 import "server-only";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
-import { prisma } from "@/lib/prisma";
+import { dirname, join } from "node:path";
+import { currentProfile, getPrisma, profileDatabasePath } from "@/lib/prisma";
+import type { prisma } from "@/lib/prisma-client";
 import { categoryType, isTransactionType } from "./transaction-types";
 import { accountSeed, categorySeeds } from "./default-data";
 import { randomUUID } from "node:crypto";
@@ -60,6 +61,7 @@ async function readBackupData(client: Reader) {
 }
 
 export async function createBackupObject() {
+  const prisma = await getPrisma();
   const data = await prisma.$transaction((tx) => readBackupData(tx));
   return {
     format: BACKUP_FORMAT,
@@ -78,25 +80,23 @@ export function backupJson(value: unknown) {
   );
 }
 
-export function resolveDatabasePath() {
+export async function resolveDatabasePath() {
   const connection = process.env.DATABASE_URL ?? "file:./finance.db";
   if (!connection.startsWith("file:"))
     throw new Error("O backup JSON precisa de uma base SQLite local.");
-  const pathname = decodeURIComponent(connection.slice(5).split("?")[0]);
-  return isAbsolute(pathname)
-    ? pathname
-    : resolve(/* turbopackIgnore: true */ process.cwd(), pathname);
+  return profileDatabasePath((await currentProfile()).id);
 }
 
 export async function saveProtectionBackup(
   contents: string,
   operation: "restore" | "clear" = "restore",
 ) {
-  const databasePath = resolveDatabasePath();
+  const databasePath = await resolveDatabasePath();
   const backupDirectory = join(dirname(databasePath), "backups");
   await mkdir(backupDirectory, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const filename = `atlas-pre-${operation}-${stamp}-${randomUUID()}.json`;
+  const { id } = await currentProfile();
+  const filename = `atlas-${id}-pre-${operation}-${stamp}-${randomUUID()}.json`;
   await writeFile(join(backupDirectory, filename), contents, { flag: "wx" });
   return join("backups", filename);
 }
@@ -104,6 +104,7 @@ export async function saveProtectionBackup(
 export async function clearData(mode: "transactions" | "all") {
   if (mode !== "transactions" && mode !== "all")
     throw new Error("Modo inválido.");
+  const prisma = await getPrisma();
   return prisma.$transaction(
     async (tx) => {
       const current = {
@@ -472,6 +473,7 @@ async function insertBatches<T>(
 
 export async function restoreBackup(document: BackupDocument) {
   const data = document.data;
+  const prisma = await getPrisma();
   return prisma.$transaction(
     async (tx) => {
       const current = {
