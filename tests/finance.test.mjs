@@ -16,6 +16,12 @@ registerHooks({
         url: "data:text/javascript,export function revalidatePath() {}",
         shortCircuit: true,
       };
+    // The selected profile comes from a cookie; tests set it on globalThis.
+    if (specifier === "next/headers")
+      return {
+        url: "data:text/javascript,export async function cookies() { return { get(name) { const value = globalThis.atlasTestProfile; return value ? { name, value } : undefined; }, set() {} }; }",
+        shortCircuit: true,
+      };
     if (specifier === "next/navigation")
       return {
         url: "data:text/javascript,export function redirect(url) { const error = new Error('redirect'); error.destination = url; throw error; }",
@@ -34,19 +40,22 @@ registerHooks({
 
 const directory = await mkdtemp(join(tmpdir(), "atlas-finance-test-"));
 process.env.DATABASE_URL = `file:${join(directory, "finance.db").replaceAll("\\", "/")}`;
-const database = new Database(join(directory, "finance.db"));
-database.pragma("foreign_keys = ON");
 const migrationRoot = new URL("../prisma/migrations/", import.meta.url);
-for (const entry of (await readdir(migrationRoot, { withFileTypes: true }))
-  .filter((item) => item.isDirectory())
-  .sort((a, b) => a.name.localeCompare(b.name)))
-  database.exec(
-    await readFile(
-      new URL(`${entry.name}/migration.sql`, migrationRoot),
-      "utf8",
-    ),
-  );
-database.close();
+async function migrateDatabase(file) {
+  const database = new Database(file);
+  database.pragma("foreign_keys = ON");
+  for (const entry of (await readdir(migrationRoot, { withFileTypes: true }))
+    .filter((item) => item.isDirectory())
+    .sort((a, b) => a.name.localeCompare(b.name)))
+    database.exec(
+      await readFile(
+        new URL(`${entry.name}/migration.sql`, migrationRoot),
+        "utf8",
+      ),
+    );
+  database.close();
+}
+await migrateDatabase(join(directory, "finance.db"));
 
 const { prisma } = await import("../src/lib/prisma-client.ts");
 const transactions = await import("../src/app/transacoes/actions.ts");
@@ -583,7 +592,7 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
       assert.equal(response.status, 200);
       assert.match(
         response.headers.get("content-disposition"),
-        /atlas-backup-\d{4}-\d{2}-\d{2}\.json/,
+        /atlas-backup-sami-\d{4}-\d{2}-\d{2}\.json/,
       );
       const contents = await response.text();
       const original = JSON.parse(contents);
@@ -1750,6 +1759,114 @@ test("financial flows preserve data and reject invalid operations", async (t) =>
         );
       assert.ok(transactionTypes.every(isTransactionType));
       assert.equal(isTransactionType("SALARY"), false);
+    },
+  );
+  await t.test("profiles keep separate databases and rules", async () => {
+    const { prismaFor, profileDatabaseUrl } =
+      await import("../src/lib/prisma-client.ts");
+    const { getPrisma } = await import("../src/lib/prisma.ts");
+    const { saveCategory } = await import("../src/app/categorias/actions.ts");
+    const { bankTransactionType } = await import("../src/lib/nubank-csv.ts");
+    assert.equal(profileDatabaseUrl("sami"), process.env.DATABASE_URL);
+    assert.equal(
+      profileDatabaseUrl("paula"),
+      process.env.DATABASE_URL.replace(/finance\.db$/, "finance-paula.db"),
+    );
+    // Unknown cookies fall back to the owner's profile.
+    assert.equal(profileDatabaseUrl("outro"), process.env.DATABASE_URL);
+    assert.equal(
+      bankTransactionType("Pix Mouna Hussen Safatli", 100n, false),
+      "INCOME",
+    );
+    assert.equal(
+      parseNubankCsv(
+        "Data,Valor,Identificador,Descrição\n01/09/2026,100.00,id-1,Pix Mouna Hussen Safatli",
+        { personalRules: false },
+      )[0].type,
+      "INCOME",
+    );
+    globalThis.atlasTestProfile = "paula";
+    try {
+      await assert.rejects(getPrisma(), /npm run db:deploy/);
+      await migrateDatabase(join(directory, "finance-paula.db"));
+      await redirected(
+        () => saveCategory(form({ name: "Só da Paula", type: "EXPENSE" })),
+        "sucesso=salva",
+      );
+      const where = { name_type: { name: "Só da Paula", type: "EXPENSE" } };
+      assert.ok(await prismaFor("paula").category.findUnique({ where }));
+      assert.equal(await prisma.category.findUnique({ where }), null);
+    } finally {
+      globalThis.atlasTestProfile = undefined;
+      await prismaFor("paula").$disconnect();
+    }
+  });
+  await t.test(
+    "starter rules fill only missing rules and uncategorized rows",
+    async () => {
+      const { installStarterRules } =
+        await import("../src/lib/starter-rules.ts");
+      const account = await prisma.account.upsert({
+        where: { name_type: { name: "Conta principal", type: "CHECKING" } },
+        create: { name: "Conta principal", type: "CHECKING" },
+        update: {},
+      });
+      const compras = await prisma.category.upsert({
+        where: { name_type: { name: "Compras", type: "EXPENSE" } },
+        create: { name: "Compras", type: "EXPENSE" },
+        update: {},
+      });
+      const outros = await prisma.category.upsert({
+        where: { name_type: { name: "Outros", type: "EXPENSE" } },
+        create: { name: "Outros", type: "EXPENSE" },
+        update: {},
+      });
+      // A user's own decision for a starter term is kept as is.
+      await prisma.categoryRule.create({
+        data: { contains: "SHOPEE", categoryId: outros.id, enabled: false },
+      });
+      const row = (description, categoryId = null) =>
+        prisma.transaction.create({
+          data: {
+            description,
+            amountCents: 1000n,
+            type: "EXPENSE",
+            occurredAt: new Date("2026-03-10T12:00:00Z"),
+            accountId: account.id,
+            categoryId,
+          },
+        });
+      const open = await row("Starter Mercadolivre*Loja");
+      const chosen = await row("Starter Mercadolivre*Outra", outros.id);
+      const lookalike = await row("Starter Taguifoods");
+      const dry = await installStarterRules(prisma, {
+        categorizeHistory: true,
+        dryRun: true,
+      });
+      assert.ok(!dry.addedRules.includes("shopee"));
+      assert.equal(
+        (await prisma.transaction.findUnique({ where: { id: open.id } }))
+          .categoryId,
+        null,
+      );
+      await installStarterRules(prisma, { categorizeHistory: true });
+      const after = async (id) =>
+        (await prisma.transaction.findUnique({ where: { id } })).categoryId;
+      assert.equal(await after(open.id), compras.id);
+      assert.equal(await after(chosen.id), outros.id);
+      assert.equal(await after(lookalike.id), null);
+      assert.equal(
+        await prisma.categoryRule.count({ where: { contains: "shopee" } }),
+        0,
+      );
+      // Running again changes nothing.
+      const again = await installStarterRules(prisma, {
+        categorizeHistory: true,
+      });
+      assert.deepEqual(again.addedRules, []);
+      await prisma.transaction.deleteMany({
+        where: { id: { in: [open.id, chosen.id, lookalike.id] } },
+      });
     },
   );
   await t.test("month coverage reports imported sources and days", async () => {

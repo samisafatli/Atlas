@@ -1,13 +1,13 @@
 # Contexto do Atlas
 
-Atualizado em 28/09/2026. Leia este documento antes de alterar regras financeiras.
+Atualizado em 03/10/2026. Leia este documento antes de alterar regras financeiras.
 Ele registra decisões do usuário, não substitui a inspeção do código e do banco atuais.
 
 ## Objetivo e período
 
 Preferência de interface: manter telas concisas, sem blocos didáticos sobre regras internas ou avisos financeiros repetidos. As explicações ficam nesta documentação. Preservar mensagens de erro, estados vazios, indicações específicas de estimativa e consequências de ações destrutivas. Os avisos extensos de acompanhamento/histórico no dashboard foram removidos a pedido do usuário; o marco de setembro continua válido para regras e revisões de dados. Visual escolhido em 01/10/2026: tema escuro “Noturno”, com fonte Manrope instalada localmente. As cores ficam como tokens em `src/app/globals.css`; os componentes não usam cores literais. O destaque (verde-menta) é separado das cores de significado (`pos`, `neg`, `info`, `warn`), e as categorias recebem cores pela posição no ranking do mês. O dashboard não tem mais os blocos “Últimas transações” e “Fechamento mensal”, removidos a pedido do usuário.
 
-Aplicativo pessoal, inicialmente para o proprietário e futuramente sua namorada; não é um SaaS.
+Aplicativo pessoal do proprietário (Sami) e da namorada (Paula); não é um SaaS. Desde 03/10/2026 há dois perfis totalmente separados, usados no computador dele e sem senha por decisão do usuário (PIN talvez no futuro). Uma visão conjunta pode ser pensada depois; não existe hoje. As decisões financeiras abaixo valem só para o perfil Sami.
 O acompanhamento deliberado começa em **setembro/2026**. Meses anteriores são histórico aproximado e não precisam ficar perfeitamente classificados. Não confundir essa data com certificação de que setembro ou meses seguintes estão completos.
 
 O escopo é o Nubank: faturas do cartão e extratos da conta. Compras e parcelas usam a data dos arquivos; o resultado mensal combina essas despesas com o extrato e não equivale ao saldo bancário, ao caixa disponível ou à fatura a pagar. Fatura e extrato do período são necessários; importações parciais não fecham um mês.
@@ -31,7 +31,10 @@ O escopo é o Nubank: faturas do cartão e extratos da conta. Compras e parcelas
 ## Funcionamento e manutenção
 
 - Next.js, Prisma 7 e SQLite. Banco local `finance.db` conforme `DATABASE_URL`; parar o servidor não apaga os dados. Código Git não transfere automaticamente banco ou backups.
-- Migrações: `npx prisma migrate deploy --config prisma7.config.ts`; cliente: `npx prisma generate --config prisma7.config.ts`.
+- Perfis (`src/lib/profiles.ts`): cada perfil tem um banco SQLite próprio. Sami usa `DATABASE_URL` (`finance.db`); Paula usa `finance-paula.db` na mesma pasta. O seletor no cabeçalho grava o cookie `atlas-profile` e volta ao dashboard. Páginas e actions usam `getPrisma()` (`src/lib/prisma.ts`), que abre o banco do perfil atual; o `prisma` exportado por `prisma-client.ts` é sempre o do Sami e fica para scripts, seed e testes. O id do perfil nomeia o arquivo e não deve mudar; o nome exibido pode.
+- Regras pessoais fixas (mãe/Itaú, salários Safatli e Caixa) só rodam em perfis com `personalRules: true` (somente Sami), tanto no parser do navegador quanto no servidor. Os scripts de reparo e revisão de setembro operam só no banco do Sami.
+- Backups são por perfil: o download se chama `atlas-backup-<perfil>-<data>.json` e as cópias de proteção `backups/atlas-<perfil>-pre-*.json`. Restaurar substitui o banco do perfil selecionado; conferir o perfil antes de restaurar.
+- Migrações: `npm run db:deploy` aplica as migrações em todos os perfis e faz o seed apenas de bancos recém-criados (bancos existentes não recebem seed de novo, para não recriar categorias excluídas). Cliente: `npx prisma generate --config prisma7.config.ts`.
 - Testes: `npm test` usa banco temporário isolado. Também executar `npm run lint` e `npm run build` para mudanças relevantes.
 - Leia as APIs da versão instalada de Next em `node_modules/next/dist/docs/`.
 - CSV de cartão e extrato, OFX e múltiplos arquivos são suportados. Identificador bancário prevalece na deduplicação. Sem identificador, ocorrências idênticas são contadas por arquivo; arquivos parciais separados podem continuar ambíguos. Prefira arquivos completos. Preserve fingerprints ao corrigir classificações manuais.
@@ -43,6 +46,8 @@ O escopo é o Nubank: faturas do cartão e extratos da conta. Compras e parcelas
 - Nomes confirmados pelo usuário em 01/10/2026: PJBANK → Condomínio NeoBandeirantes; Sua Academia → Smartfit; TELEFONICA BRAS → Vivo internet; CEG/Companhia Distribuidora de Gás → Naturgy; Light (grafias “LIGHT SERV” e “Pix - Light”) → Light. Termos curtos como “LIGHT” ou “CEG” foram evitados para não capturar outros comerciantes.
 - `/categorias`: criar, renomear e excluir categorias sem uso. Categorias de estorno são de despesa. Tipos sem categoria mostram “Não se aplica”; filtro “Sem categoria” só inclui os tipos categorizáveis.
 - Backups JSON incluem dados e estimativas; operações destrutivas têm cópia de proteção. Fazer backup antes de revisões em lote. Não versionar banco, backups ou documentos financeiros pessoais.
+- Regras iniciais (`src/lib/starter-rules.ts`, `scripts/install-starter-rules.mjs`, com `--dry-run`): lista de comerciantes comuns do Rio (Mercado Livre, Shopee, supermercados, hortifrutis, iFood, farmácias, postos, streaming etc.). É manutenção explícita: só adiciona regras ausentes, sem alterar regras existentes, inclusive desabilitadas, e sem criar categorias. Termos curtos que se escondem em outras palavras ficam de fora: "mercado" (Mercado Pago), "raia" (praia), "posto" (imposto), "uber" sozinho e "ifood" sozinho (casava com "Taguifoods"). Droga Raia (`RAIA1519`) continua manual.
+- Aplicado em 03/10/2026 a pedido do usuário: 52 regras novas no perfil Sami (32 → 84) e 64 no perfil Paula, que ainda não tinha lançamentos. No histórico do Sami, todas as regras ativas (as novas e as já existentes) preencheram somente lançamentos sem categoria, em todos os meses: 520 → 383 sem categoria e nenhuma categoria já escolhida foi alterada. Isso incluiu regras antigas do próprio usuário em meses anteriores a setembro (por exemplo, Obramax → “Moradia — Reformas e manutenção” em compras de jan–mai/2026). Cópias de segurança em `backups/finance-<perfil>-pre-starter-rules-*.db`. Os que restam sem categoria são sobretudo Pix para pessoas e boletos, que não devem ser classificados por regra.
 - `scripts/review-tracking-start.mjs`: instalação explícita das regras específicas de setembro e correção de estornos de compra no débito desde 01/09/2026. Não executar automaticamente no startup. Preserva regras existentes (inclusive desabilitadas) e categorias já atribuídas.
 
 ## Próximas revisões
@@ -50,7 +55,7 @@ O escopo é o Nubank: faturas do cartão e extratos da conta. Compras e parcelas
 - Conferir setembro com fatura e extrato completos; separar tipo errado (afeta indicadores) de categoria ausente (afeta distribuição).
 - Resolver somente ambiguidades confirmadas pelo usuário. Não classificar Pix por nome de pessoa ou intermediário de pagamentos sem contexto.
 - Cobertura por mês: o dashboard mostra, para cartão e conta, quantos lançamentos importados existem no mês e o intervalo de dias (`src/lib/import-coverage.ts`); origem ausente aparece destacada. Isso indica o que foi importado, não certifica completude: lançamentos de cartão usam a data da compra, e manuais não entram. Abril e junho/2026 parecem não ter fatura completa.
-- Regras pessoais configuráveis por pessoa antes de incluir a namorada. Adiado por decisão do usuário em 28/09/2026: não há plano de incluir a conta dela por enquanto; não priorizar.
+- Visão conjunta Sami + Paula (por exemplo, gastos compartilhados): possível no futuro, ainda não decidida. Os bancos separados permitem uma tela que leia os dois sem misturar os dados.
 - Ao restaurar backups muito antigos, revisar compatibilidade: eles podem reintroduzir categorias antigas; migrar o esquema não reexecuta transformações de dados já aplicadas.
 - Registrar novas decisões aqui. Assistentes externos não têm acesso automático à conversa que originou essas regras.
 

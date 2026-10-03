@@ -149,6 +149,14 @@ local e não é versionado. A configuração padrão pode ser alterada por meio 
 idempotente: cria a conta principal e categorias padrão sem inserir transações
 de exemplo.
 
+### Perfis
+
+Cada perfil (`src/lib/profiles.ts`) tem um banco próprio: o perfil principal usa
+`DATABASE_URL`, e os demais ficam ao lado dele como `finance-<perfil>.db`. Troque
+de perfil pelo seletor no cabeçalho. Depois de puxar novas migrations ou criar
+um perfil, rode `npm run db:deploy`: ele aplica as migrations em todos os perfis
+e carrega os dados iniciais só nos bancos que acabou de criar.
+
 ## Backup e restauração
 
 Em **Configurações → Backup → Limpar dados**, escolha limpar somente lançamentos/importações
